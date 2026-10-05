@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Citas</title>
+
+    <link rel="stylesheet" href="/css/citas.css">
+
+</head>
+
+<body>
+
+<div class="contenedor">
+
+    <!-- ========================= -->
+    <!-- HEADER -->
+    <!-- ========================= -->
+
+    <div class="top-bar">
+
+        <h2 class="titulo">
+            Módulo Citas
+        </h2>
+
+        <div class="lado-derecho">
+
+            <img
+                src="/img/logo.png"
+                class="logo"
+                alt="Logo"
+            >
+
+            
+            <a href="http://localhost:8000/" class="btn-icon">🏠</a>
+
+            <a
+                href="/logout"
+                class="btn-salir"
+            >
+                Salir
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================= -->
+    <!-- MENSAJE DE ERROR -->
+    <!-- ========================= -->
+
+    <% if (typeof error !== "undefined" && error) { %>
+
+        <script>
+
+            document.addEventListener("DOMContentLoaded", function () {
+
+                Swal.fire({
+                    icon: "error",
+                    title: "Horario no disponible",
+                    text: "<%= error %>",
+                    confirmButtonColor: "#d33"
+                });
+
+            });
+
+        </script>
+
+    <% } %>
+
+
+    <!-- ========================= -->
+    <!-- FORMULARIO -->
+    <!-- ========================= -->
+
+    <div class="formulario">
+
+        <form
+            method="POST"
+            action="/citas"
+        >
+
+            <input
+                type="hidden"
+                name="folio"
+                value="<%= editar?.folio || '' %>"
+            >
+
+
+            <div class="grid-form">
+
+
+                <!-- NOMBRE -->
+
+                <input
+                    type="text"
+                    name="nombre"
+                    placeholder="Nombre"
+                    value="<%= editar?.nombre || '' %>"
+                    required
+                >
+
+
+                <!-- APELLIDO -->
+
+                <input
+                    type="text"
+                    name="apellido"
+                    placeholder="Apellido"
+                    value="<%= editar?.apellido || '' %>"
+                    required
+                >
+
+
+                <!-- ÁREA -->
+
+                <select
+                    name="area"
+                    required
+                >
+
+                    <option value="">
+                        Seleccionar área
+                    </option>
+
+                    <% const areas = [
+                        "Nutrición",
+                        "Yoga",
+                        "Psicología",
+                        "Psicología infantil",
+                        "Tanatología",
+                        "Servicios jurídicos",
+                        "Inglés",
+                        "Pedagogía"
+                    ]; %>
+
+
+                    <% areas.forEach(area => { %>
+
+                        <option
+                            value="<%= area %>"
+                            <%= editar?.area === area ? "selected" : "" %>
+                        >
+                            <%= area %>
+                        </option>
+
+                    <% }); %>
+
+                </select>
+
+
+                <!-- FECHA -->
+
+                <input
+                    type="date"
+                    name="fecha"
+                    value="<%= editar?.fecha || '' %>"
+                    required
+                >
+
+
+                <!-- HORA -->
+
+                <input
+                    type="time"
+                    name="hora"
+                    value="<%= editar?.hora || '' %>"
+                    required
+                >
+
+            </div>
+
+
+            <!-- ========================= -->
+            <!-- BOTÓN GUARDAR -->
+            <!-- ========================= -->
+
+            <div class="acciones-form">
+
+                <button
+                    type="submit"
+                    name="guardar"
+                    value="1"
+                    class="btn-guardar"
+                >
+
+                    <%= editar ? "Actualizar" : "Guardar" %>
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+
+    <!-- ========================= -->
+    <!-- BUSCADOR -->
+    <!-- ========================= -->
+
+    <div class="buscador">
+
+        <form
+            method="POST"
+            action="/citas/buscar"
+        >
+
+            <input
+                type="text"
+                name="buscar"
+                placeholder="Buscar por folio o nombre"
+                value="<%= typeof busqueda !== 'undefined' ? busqueda : '' %>"
+            >
+
+            <button
+                type="submit"
+                class="btn-buscar"
+            >
+                Buscar
+            </button>
+
+
+            <a
+                href="/citas"
+                class="btn-buscar"
+            >
+                Mostrar todos
+            </a>
+
+
+            <a
+                href="/citas/pdf"
+                target="_blank"
+                class="btn-pdf"
+            >
+                PDF
+            </a>
+
+        </form>
+
+    </div>
+
+
+    <!-- ========================= -->
+    <!-- TABLA -->
+    <!-- ========================= -->
+
+    <div class="tabla-responsive">
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th>Folio</th>
+
+                    <th>Nombre</th>
+
+                    <th>Apellido</th>
+
+                    <th>Área</th>
+
+                    <th>Fecha</th>
+
+                    <th>Hora</th>
+
+                    <th>Acciones</th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                <% if (datos && datos.length > 0) { %>
+
+                    <% datos.forEach(c => { %>
+
+                        <tr>
+
+                            <td>
+                                <%= c.folio %>
+                            </td>
+
+                            <td>
+                                <%= c.nombre %>
+                            </td>
+
+                            <td>
+                                <%= c.apellido %>
+                            </td>
+
+                            <td>
+                                <%= c.area %>
+                            </td>
+
+                            <td>
+                                <%= c.fecha %>
+                            </td>
+
+                            <td>
+                                <%= c.hora %>
+                            </td>
+
+                            <td>
+
+
+                                <!-- EDITAR -->
+
+                                <a
+                                    href="/citas?editar=<%= encodeURIComponent(c.folio) %>"
+                                    class="btn-actualizar"
+                                >
+                                    Editar
+                                </a>
+
+
+                                <!-- ELIMINAR -->
+
+                                <a
+                                    href="/citas?eliminar=<%= encodeURIComponent(c.folio) %>"
+                                    class="btn-eliminar"
+                                    onclick="return confirm('¿Eliminar cita?')"
+                                >
+                                    Eliminar
+                                </a>
+
+                            </td>
+
+                        </tr>
+
+                    <% }); %>
+
+                <% } else { %>
+
+                    <tr>
+
+                        <td
+                            colspan="7"
+                            style="text-align:center;"
+                        >
+                            No hay citas registradas.
+                        </td>
+
+                    </tr>
+
+                <% } %>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+
+<!-- ========================= -->
+<!-- SWEET ALERT -->
+<!-- ========================= -->
+
+<script
+    src="https://cdn.jsdelivr.net/npm/sweetalert2@11">
+</script>
+
+</body>
+
+</html>

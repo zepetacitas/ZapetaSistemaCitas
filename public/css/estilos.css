@@ -1,0 +1,88 @@
+/* RESET */
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+/* BODY */
+body{
+    font-family:'Segoe UI', sans-serif;
+    background:#f2f2f2;
+}
+
+/* LOGO */
+.logo{
+    display:flex;
+    justify-content:center;
+    margin-top:40px;
+}
+
+.logo img{
+    width:320px;
+}
+
+/* MENU */
+.menu{
+    display:flex;
+    justify-content:center;
+    gap:30px;
+    margin-top:50px;
+    flex-wrap:wrap;
+}
+
+/* TARJETAS */
+.card{
+    background:#ff7a00;
+    width:180px;
+    height:130px;
+    border-radius:15px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    text-decoration:none;
+    color:white;
+    font-weight:bold;
+    transition:0.3s;
+    box-shadow:0 5px 15px rgba(0,0,0,0.2);
+}
+
+/* HOVER */
+.card:hover{
+    transform:translateY(-8px) scale(1.05);
+    box-shadow:0 10px 25px rgba(0,0,0,0.3);
+}
+
+/* ICONO */
+.icono-circulo{
+    width:70px;
+    height:70px;
+    border-radius:50%;
+    background:white;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    margin-bottom:10px;
+    overflow:hidden;
+}
+
+/* IMAGEN ICONO */
+.icono-circulo img{
+    width:40px !important;
+    height:40px !important;
+    object-fit:contain;
+}
+
+/* TEXTO */
+.card h3{
+    font-size:16px;
+}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+    .menu{
+        flex-direction:column;
+        align-items:center;
+    }
+}

@@ -1,0 +1,24 @@
+[
+    {
+        "folio": "TO20260617-001",
+        "nombre": "Luis Alexis",
+        "apellido": "Torres Medina",
+        "curp": "TOML000520HDFRDSA7",
+        "sexo": "Masculino",
+        "fecha_nacimiento": "2000-05-20",
+        "domicilio": "Amado Nervo 200 Col.Pblo Santiago Zapotitlan C.P13300 CDMX ",
+        "telefono": "55 72126145",
+        "servicio": "Residencias"
+    },
+    {
+        "folio": "MA20260618-001",
+        "nombre": "Montserrat",
+        "apellido": "Martinez Cuz",
+        "curp": "MACM020614MOCRRNA0",
+        "sexo": "Femenino",
+        "fecha_nacimiento": "2026-06-18",
+        "domicilio": "Amp.Selene,Mar de la fecundidad. C.P 13430",
+        "telefono": "565997044",
+        "servicio": "Residencias"
+    }
+]

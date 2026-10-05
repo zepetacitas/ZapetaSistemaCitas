@@ -1,0 +1,13 @@
+[
+    {
+        "folio": "TO20260623-001",
+        "nombre": "Luis",
+        "apellido": "Torres Medina",
+        "curp": "LUIS0000110SAHDSA7",
+        "sexo": "Masculino",
+        "fecha_nacimiento": "2026-06-03",
+        "domicilio": "EJEMPLO DE DOMICILIO",
+        "telefono": "55 33334444",
+        "servicio": "Residencias"
+    }
+]

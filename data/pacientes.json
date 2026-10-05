@@ -1,0 +1,13 @@
+[
+    {
+        "folio": "NI20260531-001",
+        "nombre": "Rosa",
+        "apellido": "Lopez",
+        "curp": "LOMR000101MMCPTSA6",
+        "sexo": "Femenino",
+        "fecha_nacimiento": "2000-01-01",
+        "domicilio": "Selene",
+        "telefono": "56 29501108",
+        "servicio": "Nutrici\u00f3n"
+    }
+]
