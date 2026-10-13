@@ -1,200 +1,120 @@
 const CitasModel = require("../models/CitasModel");
-
+const {
+    enviarConfirmacion
+} = require("../services/correoService");
 class CitasController {
 
     async index(req, res) {
+    const modelo = new CitasModel();
+    console.log("Entró a CitasController.index:", req.method);
 
-        const modelo = new CitasModel();
-
+    try {
         if (req.method === "POST") {
-
             const fecha = req.body.fecha || "";
             const hora = req.body.hora || "";
             const folioActual = req.body.folio || "";
 
-            const citaExistente =
-                await modelo.buscarPorFechaHora(
-                    fecha,
-                    hora,
-                    folioActual
-                );
+            const citaExistente = await modelo.buscarPorFechaHora(
+                fecha,
+                hora,
+                folioActual
+            );
 
             if (citaExistente) {
-
                 const datos = await modelo.obtener();
-
-                return res.render(
-                    "citas/citas",
-                    {
-                        datos,
-                        editar: req.body,
-                        error: "Ya existe una cita en esa fecha y hora"
-                    }
-                );
+                return res.render("citas/citas", {
+                    datos,
+                    editar: req.body,
+                    error: "Ya existe una cita en esa fecha y hora"
+                });
             }
 
-            let folio;
+            let folio = folioActual;
 
-
-            if (folioActual) {
-
-                // Estamos editando
-                folio = folioActual;
-
-            } else {
-
+            if (!folioActual) {
                 const ahora = new Date();
-
-                const year =
-                    ahora.getFullYear();
-
-                const month =
-                    String(
-                        ahora.getMonth() + 1
-                    ).padStart(2, "0");
-
-                const day =
-                    String(
-                        ahora.getDate()
-                    ).padStart(2, "0");
-
-
                 const fechaActual =
-                    `${year}${month}${day}`;
+                    `${ahora.getFullYear()}${String(ahora.getMonth() + 1).padStart(2, "0")}${String(ahora.getDate()).padStart(2, "0")}`;
 
-
-                const prefijo =
-                    `CT${fechaActual}`;
-
-
-                const citas =
-                    await modelo.obtener();
-
+                const prefijo = `CT${fechaActual}`;
+                const citas = await modelo.obtener();
 
                 let contador = 1;
-
-
-                for (const cita of citas) {
-
-                    if (
-                        cita.folio &&
-                        cita.folio.startsWith(prefijo)
-                    ) {
-
+                for (const existente of citas) {
+                    if (existente.folio && existente.folio.startsWith(prefijo)) {
                         contador++;
                     }
                 }
 
-
-                folio =
-                    `${prefijo}-${String(contador).padStart(3, "0")}`;
+                folio = `${prefijo}-${String(contador).padStart(3, "0")}`;
             }
+
             const cita = {
-
                 folio,
-
-                nombre:
-                    req.body.nombre || "",
-
-                apellido:
-                    req.body.apellido || "",
-
-                area:
-                    req.body.area || "",
-
+                nombre: (req.body.nombre || "").trim(),
+                apellido: (req.body.apellido || "").trim(),
+                correo: (req.body.correo || "").trim().toLowerCase(),
+                area: (req.body.area || "").trim(),
                 fecha,
-
                 hora
             };
 
             if (folioActual) {
-
-                await modelo.actualizar(
-                    folio,
-                    cita
-                );
-
-            }
-
-            else {
-
+                await modelo.actualizar(folio, cita);
+            } else {
                 try {
-
                     await modelo.guardar(cita);
-
                 } catch (error) {
-
-                    // MongoDB detectó un horario duplicado
                     if (error.code === 11000) {
-
-                        const datos =
-                            await modelo.obtener();
-
-                        return res.render(
-                            "citas/citas",
-                            {
-                                datos,
-                                editar: req.body,
-                                error: "Ya existe una cita en esa fecha y hora"
-                            }
-                        );
+                        const datos = await modelo.obtener();
+                        return res.render("citas/citas", {
+                            datos,
+                            editar: req.body,
+                            error: "Ya existe una cita en esa fecha y hora"
+                        });
                     }
-
                     throw error;
                 }
+
+                try {
+                    await enviarConfirmacion(cita);
+                    console.log(`Confirmación enviada a ${cita.correo}`);
+                } catch (error) {
+                    console.error("La cita se guardó, pero falló el correo:", error.message);
+                }
             }
-
-
 
             return res.redirect("/citas");
         }
 
-
         if (req.query.eliminar) {
-
-            await modelo.eliminar(
-                req.query.eliminar
-            );
-
+            await modelo.eliminar(req.query.eliminar);
             return res.redirect("/citas");
         }
 
         let editar = null;
 
-
         if (req.query.editar) {
-
-            const citas =
-                await modelo.obtener();
-
-
-            for (const cita of citas) {
-
-                if (
-                    cita.folio ===
-                    req.query.editar
-                ) {
-
-                    editar = cita;
-
-                    break;
-                }
-            }
+            const citas = await modelo.obtener();
+            editar = citas.find(cita => cita.folio === req.query.editar) || null;
         }
 
-        const datos =
-            await modelo.obtener();
+        console.log("Consultando citas en MongoDB...");
+        const datos = await modelo.obtener();
+        console.log("MongoDB respondió. Citas:", datos.length);
+        console.log("Intentando mostrar la vista EJS");
 
-
-        return res.render(
-            "citas/citas",
-            {
-                datos,
-                editar,
-                error: null
-            }
-        );
+        return res.render("citas/citas", {
+            datos,
+            editar,
+            error: null
+        });
+    } catch (error) {
+        console.error("Error en CitasController.index:", error);
+        return res.status(500).send("Ocurrió un error al cargar el módulo de citas. Revisa la terminal de Node.");
     }
+}   
+
 
     async buscar(req, res) {
 

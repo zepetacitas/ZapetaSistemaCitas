@@ -1,4 +1,9 @@
 require("dotenv").config();
+const { iniciarRecordatorios } =
+    require("./services/recordatorios");
+
+const { verificarCorreo } =
+    require("./config/correo");
 
 const express = require("express");
 
@@ -60,11 +65,17 @@ app.use(
 
 const citasRoutes =
     require("./routes/citas");
-
+app.use((req, res, next) => {
+    console.log("Petición recibida:", req.method, req.originalUrl);
+    next();
+});
 app.use(
     "/citas",
     citasRoutes
 );
+app.get("/logout", (req, res) => {
+    res.redirect("http://localhost:8000/");
+});
 
 
 // ========================================
@@ -84,7 +95,18 @@ app.get("/", (req, res) => {
 // ========================================
 // SERVIDOR
 // ========================================
+iniciarRecordatorios();
 
+verificarCorreo()
+    .then(() => {
+        console.log("Gmail verificado correctamente");
+    })
+    .catch((error) => {
+        console.error(
+            "No se pudo verificar Gmail:",
+            error.message
+        );
+    });
 const PORT =
     process.env.PORT || 3000;
 

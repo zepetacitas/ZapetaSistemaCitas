@@ -17,6 +17,12 @@ const CitaSchema = new mongoose.Schema(
             required: true,
             trim: true
         },
+        correo: {
+             type: String,
+             required: true,
+             trim: true,
+             lowercase: true
+        },
         area: {
             type: String,
             required: true,
@@ -29,7 +35,11 @@ const CitaSchema = new mongoose.Schema(
         hora: {
             type: String,
             required: true
-        }
+        },
+        recordatorioEnviado: {
+            type: Boolean,
+            default: false
+}
     },
     {
         timestamps: true,
@@ -156,6 +166,26 @@ class CitasModel {
             .findOne(filtro)
             .lean();
     }
+   async obtenerPendientesRecordatorio(fecha) {
+    return await Cita.find({
+        fecha,
+        $or: [
+            { recordatorioEnviado: false },
+            { recordatorioEnviado: { $exists: false } }
+        ]
+    }).lean();
+}
+
+async marcarRecordatorioEnviado(folio) {
+    return await Cita.updateOne(
+        { folio },
+        {
+            $set: {
+                recordatorioEnviado: true
+            }
+        }
+    );
+}
 
 }
 
