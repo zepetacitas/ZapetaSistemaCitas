@@ -1,4 +1,6 @@
+
 const mongoose = require("mongoose");
+
 const CitaSchema = new mongoose.Schema(
     {
         folio: {
@@ -18,10 +20,10 @@ const CitaSchema = new mongoose.Schema(
             trim: true
         },
         correo: {
-             type: String,
-             required: true,
-             trim: true,
-             lowercase: true
+            type: String,
+            required: true,
+            trim: true,
+            lowercase: true
         },
         area: {
             type: String,
@@ -30,16 +32,18 @@ const CitaSchema = new mongoose.Schema(
         },
         fecha: {
             type: String,
-            required: true
+            required: true,
+            trim: true
         },
         hora: {
             type: String,
-            required: true
+            required: true,
+            trim: true
         },
         recordatorioEnviado: {
             type: Boolean,
             default: false
-}
+        }
     },
     {
         timestamps: true,
@@ -47,53 +51,50 @@ const CitaSchema = new mongoose.Schema(
     }
 );
 
+// Evita que dos citas tengan la misma fecha y hora.
 CitaSchema.index(
-    {
-        fecha: 1,
-        hora: 1
-    },
-    {
-        unique: true
-    }
+    { fecha: 1, hora: 1 },
+    { unique: true }
 );
 
-
 const Cita = mongoose.model("Cita", CitaSchema);
+
+// Escapa caracteres especiales para que la búsqueda no interprete
+// el texto introducido por el usuario como una expresión regular.
+function escaparRegex(texto) {
+    return texto.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
 class CitasModel {
 
     async obtener() {
-
-        return await Cita
-            .find()
-            .sort({
-                fecha: 1,
-                hora: 1
-            })
+        return await Cita.find()
+            .sort({ fecha: 1, hora: 1 })
             .lean();
     }
 
     async guardar(nuevo) {
-
         const cita = new Cita(nuevo);
-
         return await cita.save();
     }
 
     async eliminar(folio) {
-
-        return await Cita.deleteOne({
-            folio: folio
-        });
+        return await Cita.deleteOne({ folio });
     }
 
     async actualizar(folio, nuevo) {
-
         return await Cita.findOneAndUpdate(
+            { folio },
             {
-                folio: folio
+                $set: {
+                    nombre: nuevo.nombre,
+                    apellido: nuevo.apellido,
+                    correo: nuevo.correo,
+                    area: nuevo.area,
+                    fecha: nuevo.fecha,
+                    hora: nuevo.hora
+                }
             },
-            nuevo,
             {
                 new: true,
                 runValidators: true
@@ -102,91 +103,54 @@ class CitasModel {
     }
 
     async buscar(valor) {
+        const texto = String(valor || "").trim();
 
-        if (!valor || !valor.trim()) {
-
+        if (!texto) {
             return await this.obtener();
         }
 
-        return await Cita
-            .find({
-                $or: [
+        const regex = new RegExp(escaparRegex(texto), "i");
 
-                    {
-                        folio: {
-                            $regex: valor,
-                            $options: "i"
-                        }
-                    },
-
-                    {
-                        nombre: {
-                            $regex: valor,
-                            $options: "i"
-                        }
-                    },
-
-                    {
-                        apellido: {
-                            $regex: valor,
-                            $options: "i"
-                        }
-                    },
-
-                    {
-                        area: {
-                            $regex: valor,
-                            $options: "i"
-                        }
-                    }
-
-                ]
-            })
-            .sort({
-                fecha: 1,
-                hora: 1
-            })
+        return await Cita.find({
+            $or: [
+                { folio: regex },
+                { nombre: regex },
+                { apellido: regex },
+                { area: regex }
+            ]
+        })
+            .sort({ fecha: 1, hora: 1 })
             .lean();
     }
-    async buscarPorFechaHora(fecha, hora, folioExcluir = null) {
 
-        const filtro = {
-            fecha: fecha,
-            hora: hora
-        };
+    async buscarPorFechaHora(fecha, hora, folioExcluir = null) {
+        const filtro = { fecha, hora };
 
         if (folioExcluir) {
-
-            filtro.folio = {
-                $ne: folioExcluir
-            };
+            filtro.folio = { $ne: folioExcluir };
         }
 
-        return await Cita
-            .findOne(filtro)
-            .lean();
+        return await Cita.findOne(filtro).lean();
     }
-   async obtenerPendientesRecordatorio(fecha) {
-    return await Cita.find({
-        fecha,
-        $or: [
-            { recordatorioEnviado: false },
-            { recordatorioEnviado: { $exists: false } }
-        ]
-    }).lean();
-}
 
-async marcarRecordatorioEnviado(folio) {
-    return await Cita.updateOne(
-        { folio },
-        {
-            $set: {
-                recordatorioEnviado: true
+    async obtenerPendientesRecordatorio(fecha) {
+        return await Cita.find({
+            fecha,
+            $or: [
+                { recordatorioEnviado: false },
+                { recordatorioEnviado: { $exists: false } }
+            ]
+        }).lean();
+    }
+
+    async marcarRecordatorioEnviado(folio) {
+        return await Cita.updateOne(
+            { folio },
+            {
+                $set: { recordatorioEnviado: true }
             }
-        }
-    );
-}
-
+        );
+    }
 }
 
 module.exports = CitasModel;
