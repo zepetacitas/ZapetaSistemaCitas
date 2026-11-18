@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Citas</title>
 
     <link rel="stylesheet" href="/css/citas.css">
@@ -16,18 +17,26 @@
 
 <div class="contenedor">
 
+    <!-- BARRA SUPERIOR -->
     <div class="top-bar">
+
         <h2 class="titulo">Módulo Citas</h2>
 
         <div class="lado-derecho">
+
             <img src="/img/logo.png" class="logo" alt="Logo">
 
-            <a href="http://localhost:8000/" class="btn-icon">🏠</a>
+            <!-- REGRESAR AL MENÚ PHP -->
+            <a href="/" class="btn-icon" title="Inicio">🏠</a>
 
+            <!-- CERRAR SESIÓN -->
             <a href="/logout" class="btn-salir">Salir</a>
+
         </div>
+
     </div>
 
+    <!-- FORMULARIO -->
     <div class="formulario">
 
         <form method="POST" action="/citas" id="formularioCita" novalidate>
@@ -65,6 +74,7 @@
                 >
 
                 <select name="area" required>
+
                     <option value="">Seleccionar área</option>
 
                     <% const areas = [
@@ -79,13 +89,16 @@
                     ]; %>
 
                     <% areas.forEach(area => { %>
+
                         <option
                             value="<%= area %>"
                             <%= editar?.area === area ? "selected" : "" %>
                         >
                             <%= area %>
                         </option>
+
                     <% }); %>
+
                 </select>
 
                 <input
@@ -110,6 +123,7 @@
             </div>
 
             <div class="acciones-form">
+
                 <button
                     type="submit"
                     name="guardar"
@@ -118,12 +132,14 @@
                 >
                     <%= editar?.folio ? "Actualizar" : "Guardar" %>
                 </button>
+
             </div>
 
         </form>
 
     </div>
 
+    <!-- BUSCADOR -->
     <div class="buscador">
 
         <form method="POST" action="/citas/buscar" class="form-busqueda">
@@ -155,6 +171,7 @@
 
     </div>
 
+    <!-- TABLA -->
     <div class="tabla-responsive">
 
         <table>
@@ -178,6 +195,7 @@
                     <% datos.forEach(c => { %>
 
                         <tr>
+
                             <td><%= c.folio %></td>
                             <td><%= c.nombre %></td>
                             <td><%= c.apellido %></td>
@@ -186,6 +204,7 @@
                             <td><%= c.hora %></td>
 
                             <td>
+
                                 <div class="acciones-tabla">
 
                                     <a
@@ -217,7 +236,9 @@
                                     </form>
 
                                 </div>
+
                             </td>
+
                         </tr>
 
                     <% }); %>
@@ -240,6 +261,7 @@
 
 </div>
 
+<!-- NOTIFICACIONES -->
 <div
     id="toastContainer"
     class="toast-container"
