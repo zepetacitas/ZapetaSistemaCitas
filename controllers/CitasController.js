@@ -84,16 +84,21 @@ async function generarFolio(modelo) {
 function enviarCorreoEnSegundoPlano(cita) {
     setImmediate(async () => {
         try {
-            await enviarConfirmacion(cita);
+            console.log(
+                `INICIANDO ENVIO DE CORREO A: ${cita.correo}`
+            );
+
+            const resultado = await enviarConfirmacion(cita);
 
             console.log(
-                `CORREO DE CONFIRMACION ENVIADO CORRECTAMENTE A: ${cita.correo}`
+                `CORREO ENVIADO CORRECTAMENTE A: ${cita.correo}`,
+                resultado.messageId || ""
             );
 
         } catch (errorCorreo) {
             console.error(
                 `ERROR AL ENVIAR CORREO A ${cita.correo}:`,
-                errorCorreo
+                errorCorreo.message || errorCorreo
             );
         }
     });
@@ -288,7 +293,7 @@ class CitasController {
                     }
 
                     console.log(
-                        "Cita actualizada correctamente:",
+                        "CITA ACTUALIZADA CORRECTAMENTE:",
                         folio
                     );
 
@@ -302,18 +307,20 @@ class CitasController {
                 await modelo.guardar(cita);
 
                 console.log(
-                    "Cita guardada correctamente:",
+                    "CITA GUARDADA CORRECTAMENTE EN MONGODB:",
                     folio
                 );
 
                 // ====================================
-                // ENVIAR CORREO SIN BLOQUEAR RESPUESTA
+                // PROGRAMAR CORREO DESPUÉS DE RESPONDER
                 // ====================================
 
-                enviarCorreoEnSegundoPlano(cita);
+                res.once("finish", () => {
+                    enviarCorreoEnSegundoPlano(cita);
+                });
 
                 // ====================================
-                // RESPONDER INMEDIATAMENTE
+                // RESPONDER INMEDIATAMENTE AL NAVEGADOR
                 // ====================================
 
                 return res.redirect("/citas?exito=registrada");
@@ -357,7 +364,7 @@ class CitasController {
             const datos = await modelo.obtener();
 
             console.log(
-                "Citas consultadas correctamente:",
+                "CITAS CONSULTADAS CORRECTAMENTE:",
                 datos.length
             );
 
@@ -380,7 +387,7 @@ class CitasController {
         } catch (error) {
 
             console.error(
-                "Error en CitasController.index:",
+                "ERROR EN CitasController.index:",
                 error
             );
 
@@ -398,7 +405,7 @@ class CitasController {
 
                 } catch (errorLectura) {
                     console.error(
-                        "Error al recuperar las citas:",
+                        "ERROR AL RECUPERAR LAS CITAS:",
                         errorLectura.message
                     );
                 }
@@ -417,12 +424,16 @@ class CitasController {
 
             } catch (errorVista) {
                 console.error(
-                    "No se pudo cargar la vista de citas:",
+                    "NO SE PUDO CARGAR LA VISTA DE CITAS:",
                     errorVista.message
                 );
 
+                if (res.headersSent) {
+                    return;
+                }
+
                 return res.status(500).send(
-                    "Ocurrió un error al procesar las citas. Revisa la terminal de Node."
+                    "Ocurrió un error al procesar las citas. Revisa los Logs de Node."
                 );
             }
         }
@@ -458,13 +469,13 @@ class CitasController {
                 );
             }
 
-            console.log("Cita eliminada:", folio);
+            console.log("CITA ELIMINADA:", folio);
 
             return res.redirect("/citas?exito=eliminada");
 
         } catch (error) {
             console.error(
-                "Error al eliminar la cita:",
+                "ERROR AL ELIMINAR LA CITA:",
                 error
             );
 
@@ -478,6 +489,10 @@ class CitasController {
 
             } catch (errorVista) {
                 console.error(errorVista);
+
+                if (res.headersSent) {
+                    return;
+                }
 
                 return res.status(500).send(
                     "No fue posible eliminar la cita."
@@ -526,7 +541,7 @@ class CitasController {
 
         } catch (error) {
             console.error(
-                "Error al buscar citas:",
+                "ERROR AL BUSCAR CITAS:",
                 error
             );
 
@@ -542,6 +557,10 @@ class CitasController {
 
             } catch (errorVista) {
                 console.error(errorVista);
+
+                if (res.headersSent) {
+                    return;
+                }
 
                 return res.status(500).send(
                     "Ocurrió un error al buscar las citas."
@@ -577,9 +596,13 @@ class CitasController {
 
         } catch (error) {
             console.error(
-                "Error al generar el PDF:",
+                "ERROR AL GENERAR EL PDF:",
                 error
             );
+
+            if (res.headersSent) {
+                return;
+            }
 
             return res.status(500).send(
                 "No fue posible generar el reporte de citas."
