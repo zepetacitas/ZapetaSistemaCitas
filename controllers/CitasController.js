@@ -1,4 +1,3 @@
-
 const CitasModel = require("../models/CitasModel");
 const { enviarConfirmacion } = require("../services/correoService");
 const { validationResult } = require("express-validator");
@@ -8,6 +7,7 @@ const { validationResult } = require("express-validator");
 // ============================================
 
 function obtenerFechaHoy() {
+
     const partes = new Intl.DateTimeFormat("en-CA", {
         timeZone: "America/Mexico_City",
         year: "numeric",
@@ -66,7 +66,7 @@ function validarFechaHora(fecha, hora) {
 }
 
 // ============================================
-// GENERAR FOLIO
+// GENERAR FOLIO OPTIMIZADO
 // ============================================
 
 async function generarFolio(modelo) {
@@ -74,30 +74,13 @@ async function generarFolio(modelo) {
     const fechaActual = obtenerFechaHoy().replace(/-/g, "");
     const prefijo = `CT${fechaActual}`;
 
-    const citas = await modelo.obtener();
-
-    let numeroMayor = 0;
-
-    for (const cita of citas) {
-
-        if (!cita.folio || !cita.folio.startsWith(`${prefijo}-`)) {
-            continue;
-        }
-
-        const numero = Number(
-            cita.folio.substring(prefijo.length + 1)
-        );
-
-        if (Number.isInteger(numero) && numero > numeroMayor) {
-            numeroMayor = numero;
-        }
-    }
+    const numeroMayor = await modelo.obtenerUltimoNumeroFolio(prefijo);
 
     return `${prefijo}-${String(numeroMayor + 1).padStart(3, "0")}`;
 }
 
 // ============================================
-// MOSTRAR LA VISTA CON UN ERROR
+// MOSTRAR VISTA CON ERROR
 // ============================================
 
 async function mostrarError(
@@ -108,12 +91,14 @@ async function mostrarError(
     editar = null,
     busqueda = ""
 ) {
+
     const datos = await modelo.obtener();
 
     return res.status(status).render("citas/citas", {
         datos,
         editar,
         error: mensaje,
+        exito: "",
         busqueda
     });
 }
@@ -131,8 +116,6 @@ class CitasController {
     async index(req, res) {
 
         const modelo = new CitasModel();
-
-        console.log("Entró a CitasController.index:", req.method);
 
         try {
 
@@ -161,38 +144,18 @@ class CitasController {
                     );
                 }
 
-                // RECIBIR Y LIMPIAR DATOS
+                // LIMPIAR DATOS
 
-                const folioActual = String(
-                    req.body.folio || ""
-                ).trim();
-
-                const nombre = String(
-                    req.body.nombre || ""
-                ).trim();
-
-                const apellido = String(
-                    req.body.apellido || ""
-                ).trim();
-
-                const correo = String(
-                    req.body.correo || ""
-                ).trim().toLowerCase();
-
-                const area = String(
-                    req.body.area || ""
-                ).trim();
-
-                const fecha = String(
-                    req.body.fecha || ""
-                ).trim();
-
-                const hora = String(
-                    req.body.hora || ""
-                ).trim();
+                const folioActual = String(req.body.folio || "").trim();
+                const nombre = String(req.body.nombre || "").trim();
+                const apellido = String(req.body.apellido || "").trim();
+                const correo = String(req.body.correo || "").trim().toLowerCase();
+                const area = String(req.body.area || "").trim();
+                const fecha = String(req.body.fecha || "").trim();
+                const hora = String(req.body.hora || "").trim();
 
                 // ====================================
-                // VALIDAR CAMPOS OBLIGATORIOS
+                // VALIDAR CAMPOS
                 // ====================================
 
                 if (
@@ -203,6 +166,7 @@ class CitasController {
                     !fecha ||
                     !hora
                 ) {
+
                     return await mostrarError(
                         res,
                         modelo,
@@ -213,13 +177,10 @@ class CitasController {
                 }
 
                 // ====================================
-                // VALIDAR FECHA Y HORARIO
+                // VALIDAR FECHA Y HORA
                 // ====================================
 
-                const errorFechaHora = validarFechaHora(
-                    fecha,
-                    hora
-                );
+                const errorFechaHora = validarFechaHora(fecha, hora);
 
                 if (errorFechaHora) {
 
@@ -236,8 +197,7 @@ class CitasController {
                 // VALIDAR CORREO
                 // ====================================
 
-                const formatoCorreo =
-                    /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                const formatoCorreo = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
                 if (!formatoCorreo.test(correo)) {
 
@@ -317,50 +277,36 @@ class CitasController {
                         );
                     }
 
-                    console.log(
-                        "Cita actualizada correctamente:",
-                        folio
-                    );
+                    console.log("Cita actualizada correctamente:", folio);
 
-                } else {
+                    return res.redirect("/citas?exito=actualizada");
+                }
 
-                    // =================================
-                    // GUARDAR CITA NUEVA
-                    // =================================
+                // ====================================
+                // GUARDAR CITA NUEVA
+                // ====================================
 
-                    await modelo.guardar(cita);
+                await modelo.guardar(cita);
 
-                    console.log(
-                        "Cita guardada correctamente:",
-                        folio
-                    );
+                console.log("Cita guardada correctamente:", folio);
 
-                    // =================================
-                    // ENVIAR CORREO DE CONFIRMACIÓN
-                    // =================================
+                // ====================================
+                // ENVIAR CORREO SIN DETENER EL REGISTRO
+                // ====================================
 
-                    try {
-
-                        await enviarConfirmacion(cita);
-
-                        console.log(
-                            `Confirmación enviada a ${correo}`
-                        );
-
-                    } catch (errorCorreo) {
-
+                enviarConfirmacion(cita)
+                    .then(() => {
+                        console.log(`Confirmación enviada a ${correo}`);
+                    })
+                    .catch(errorCorreo => {
                         console.error(
                             "La cita se guardó, pero no se pudo enviar el correo:",
                             errorCorreo.message
                         );
-                    }
-                }
+                    });
 
-                if (folioActual) {
-    return res.redirect("/citas?exito=actualizada");
-}
-
-return res.redirect("/citas?exito=registrada");
+                // El usuario recibe la respuesta sin esperar al correo.
+                return res.redirect("/citas?exito=registrada");
             }
 
             // ====================================
@@ -382,12 +328,9 @@ return res.redirect("/citas?exito=registrada");
 
             if (req.query.editar) {
 
-                const citas = await modelo.obtener();
-
-                editar = citas.find(
-                    cita =>
-                        cita.folio === String(req.query.editar)
-                ) || null;
+                editar = await modelo.buscarPorFolio(
+                    String(req.query.editar)
+                );
 
                 if (!editar) {
 
@@ -411,28 +354,25 @@ return res.redirect("/citas?exito=registrada");
                 datos.length
             );
 
-       const mensajesExito = {
-    registrada: "La cita fue registrada correctamente.",
-    actualizada: "La cita fue actualizada correctamente.",
-    eliminada: "La cita fue eliminada correctamente."
-};
+            const mensajesExito = {
+                registrada: "La cita fue registrada correctamente.",
+                actualizada: "La cita fue actualizada correctamente.",
+                eliminada: "La cita fue eliminada correctamente."
+            };
 
-const exito = mensajesExito[req.query.exito] || "";
+            const exito = mensajesExito[req.query.exito] || "";
 
-return res.render("citas/citas", {
-    datos,
-    editar,
-    error: null,
-    exito,
-    busqueda: ""
-});
+            return res.render("citas/citas", {
+                datos,
+                editar,
+                error: null,
+                exito,
+                busqueda: ""
+            });
 
         } catch (error) {
 
-            console.error(
-                "Error en CitasController.index:",
-                error
-            );
+            console.error("Error en CitasController.index:", error);
 
             // ====================================
             // ERROR DE DUPLICIDAD EN MONGODB
@@ -497,9 +437,7 @@ return res.render("citas/citas", {
 
         try {
 
-            const folio = String(
-                req.body.folio || ""
-            ).trim();
+            const folio = String(req.body.folio || "").trim();
 
             if (!folio) {
 
@@ -513,10 +451,7 @@ return res.render("citas/citas", {
 
             const eliminada = await modelo.eliminar(folio);
 
-            if (
-                eliminada === false ||
-                (eliminada && eliminada.deletedCount === 0)
-            ) {
+            if (!eliminada || eliminada.deletedCount === 0) {
 
                 return await mostrarError(
                     res,
@@ -532,10 +467,7 @@ return res.render("citas/citas", {
 
         } catch (error) {
 
-            console.error(
-                "Error al eliminar la cita:",
-                error
-            );
+            console.error("Error al eliminar la cita:", error);
 
             try {
 
@@ -586,9 +518,7 @@ return res.render("citas/citas", {
                 );
             }
 
-            const valor = String(
-                req.body.buscar || ""
-            ).trim();
+            const valor = String(req.body.buscar || "").trim();
 
             const datos = await modelo.buscar(valor);
 
@@ -596,15 +526,13 @@ return res.render("citas/citas", {
                 datos,
                 editar: null,
                 error: null,
+                exito: "",
                 busqueda: valor
             });
 
         } catch (error) {
 
-            console.error(
-                "Error al buscar citas:",
-                error
-            );
+            console.error("Error al buscar citas:", error);
 
             try {
 
@@ -657,10 +585,7 @@ return res.render("citas/citas", {
 
         } catch (error) {
 
-            console.error(
-                "Error al generar el PDF:",
-                error
-            );
+            console.error("Error al generar el PDF:", error);
 
             return res.status(500).send(
                 "No fue posible generar el reporte de citas."
