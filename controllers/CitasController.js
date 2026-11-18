@@ -290,21 +290,25 @@ class CitasController {
 
                 console.log("Cita guardada correctamente:", folio);
 
-                // ====================================
-                // ENVIAR CORREO SIN DETENER EL REGISTRO
-                // ====================================
+                // =================================
+// ENVIAR CORREO DE CONFIRMACIÓN
+// =================================
 
-                enviarConfirmacion(cita)
-                    .then(() => {
-                        console.log(`Confirmación enviada a ${correo}`);
-                    })
-                    .catch(errorCorreo => {
-                        console.error(
-                            "La cita se guardó, pero no se pudo enviar el correo:",
-                            errorCorreo.message
-                        );
-                    });
+try {
 
+    await enviarConfirmacion(cita);
+
+    console.log(
+        `CONFIRMACION ENVIADA CORRECTAMENTE A: ${correo}`
+    );
+
+} catch (errorCorreo) {
+
+    console.error(
+        "ERROR AL ENVIAR CONFIRMACION:",
+        errorCorreo
+    );
+}
                 // El usuario recibe la respuesta sin esperar al correo.
                 return res.redirect("/citas?exito=registrada");
             }
