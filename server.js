@@ -1,4 +1,11 @@
+
 require("dotenv").config();
+
+const express = require("express");
+const helmet = require("helmet");
+const { rateLimit } = require("express-rate-limit");
+
+const conectarDB = require("./config/db");
 
 const { iniciarRecordatorios } =
     require("./services/recordatorios");
@@ -6,22 +13,21 @@ const { iniciarRecordatorios } =
 const { verificarCorreo } =
     require("./config/correo");
 
-const express = require("express");
-
-const conectarDB =
-    require("./config/db");
-
-const helmet = require("helmet");
-const { rateLimit } = require("express-rate-limit");
-
 const app = express();
+
+const PHP_URL =
+    process.env.PHP_URL ||
+    "http://localhost/sistema_zepeta_completo";
+
+const PHP_LOGOUT_URL =
+    process.env.PHP_LOGOUT_URL ||
+    "http://localhost:8000/";
 
 // ========================================
 // SEGURIDAD
 // ========================================
 
 app.disable("x-powered-by");
-
 app.use(helmet());
 
 // ========================================
@@ -56,35 +62,55 @@ app.use((req, res, next) => {
 // EJS
 // ========================================
 
-app.set(
-    "view engine",
-    "ejs"
-);
-
-app.set(
-    "views",
-    "./views"
-);
+app.set("view engine", "ejs");
+app.set("views", "./views");
 
 // ========================================
 // ARCHIVOS PÚBLICOS
 // ========================================
 
-app.use(
-    express.static("public")
-);
+app.use(express.static("public"));
+
+// ========================================
+// RUTAS API - CLIENTES
+// ========================================
+
+const clientesRoutes = require("./routes/clientes");
+
+app.use("/api/clientes", clientesRoutes);
+
+// ========================================
+// RUTAS API - PACIENTES
+// ========================================
+
+const pacientesRoutes = require("./routes/pacientes");
+
+app.use("/api/pacientes", pacientesRoutes);
+
+// ========================================
+// RUTAS API - EMPLEADOS
+// ========================================
+
+const empleadosRoutes = require("./routes/empleados");
+
+app.use("/api/empleados", empleadosRoutes);
+
+// ========================================
+// RUTAS API - SOCIOS
+// ========================================
+
+const sociosRoutes = require("./routes/socios");
+
+app.use("/api/socios", sociosRoutes);
 
 // ========================================
 // RUTAS CITAS
+// CONSERVADAS SIN CAMBIOS
 // ========================================
 
-const citasRoutes =
-    require("./routes/citas");
+const citasRoutes = require("./routes/citas");
 
-app.use(
-    "/citas",
-    citasRoutes
-);
+app.use("/citas", citasRoutes);
 
 // ========================================
 // CERRAR SESIÓN
@@ -92,7 +118,7 @@ app.use(
 // ========================================
 
 app.get("/logout", (req, res) => {
-    res.redirect("http://localhost:8000/");
+    res.redirect(PHP_LOGOUT_URL);
 });
 
 // ========================================
@@ -101,9 +127,7 @@ app.get("/logout", (req, res) => {
 // ========================================
 
 app.get("/", (req, res) => {
-    res.redirect(
-        "http://localhost/sistema_zepeta_completo/"
-    );
+    res.redirect(PHP_URL);
 });
 
 // ========================================
@@ -125,9 +149,7 @@ async function iniciarServidor() {
         // Verificar configuración de Gmail
         verificarCorreo()
             .then(() => {
-                console.log(
-                    "Gmail verificado correctamente"
-                );
+                console.log("Gmail verificado correctamente");
             })
             .catch((error) => {
                 console.error(
@@ -137,15 +159,15 @@ async function iniciarServidor() {
             });
 
         // Iniciar servidor Express
-        app.listen(PORT, () => {
+        app.listen(PORT, "0.0.0.0", () => {
             console.log("");
-            console.log("SISTEMA ZEPETA - CITAS");
-            console.log(
-                `Servidor: http://localhost:${PORT}`
-            );
-            console.log(
-                `Citas: http://localhost:${PORT}/citas`
-            );
+            console.log("SISTEMA ZEPETA");
+            console.log(`Servidor iniciado en el puerto ${PORT}`);
+            console.log("Módulo de citas disponible en /citas");
+            console.log("API de Clientes disponible en /api/clientes");
+            console.log("API de Pacientes disponible en /api/pacientes");
+            console.log("API de Empleados disponible en /api/empleados");
+            console.log("API de Socios disponible en /api/socios");
         });
 
     } catch (error) {

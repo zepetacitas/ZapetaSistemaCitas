@@ -1,63 +1,44 @@
+
 <?php
+require_once __DIR__ . "/ApiMongoClient.php";
+
 class EmpleadosModel {
 
-    private $archivo;
-
-    public function __construct(){
-        $this->archivo = __DIR__ . "/../data/empleados.json";
-    }
+    private $ruta = "/api/empleados";
 
     public function obtener(){
-        if(!file_exists($this->archivo)){
-            return [];
-        }
+        $respuesta = ApiMongoClient::obtener($this->ruta);
 
-        $datos = json_decode(file_get_contents($this->archivo), true);
+        $datos = $respuesta->datos ?? [];
 
-        return array_filter($datos ?? [], fn($c) => is_array($c));
+        return json_decode(json_encode($datos), true) ?? [];
     }
 
     public function guardar($nuevo){
-        $datos = $this->obtener();
-        $datos[] = $nuevo;
-
-        file_put_contents($this->archivo, json_encode($datos, JSON_PRETTY_PRINT));
+        return ApiMongoClient::guardar($this->ruta, $nuevo);
     }
 
     public function eliminar($folio){
-        $datos = array_filter($this->obtener(), function($c) use ($folio){
-            return is_array($c) && ($c['folio'] ?? '') != $folio;
-        });
-
-        file_put_contents($this->archivo, json_encode(array_values($datos), JSON_PRETTY_PRINT));
+        return ApiMongoClient::eliminar($this->ruta, $folio);
     }
 
     public function actualizar($folio, $nuevo){
-        $datos = $this->obtener();
-
-        foreach($datos as $i => $c){
-            if(is_array($c) && ($c['folio'] ?? '') === $folio){
-                $datos[$i] = $nuevo;
-                break;
-            }
-        }
-
-        file_put_contents($this->archivo, json_encode($datos, JSON_PRETTY_PRINT));
+        return ApiMongoClient::actualizar($this->ruta, $folio, $nuevo);
     }
 
     public function buscar($valor){
         $empleados = $this->obtener();
         $resultado = [];
 
-        foreach($empleados as $c){
+        foreach($empleados as $empleado){
 
-            if(!is_array($c)) continue;
+            if(!is_array($empleado)) continue;
 
             if(
-                stripos($c['folio'] ?? '', $valor) !== false ||
-                stripos($c['curp'] ?? '', $valor) !== false
+                stripos((string)($empleado['folio'] ?? ''), $valor) !== false ||
+                stripos((string)($empleado['curp'] ?? ''), $valor) !== false
             ){
-                $resultado[] = $c;
+                $resultado[] = $empleado;
             }
         }
 

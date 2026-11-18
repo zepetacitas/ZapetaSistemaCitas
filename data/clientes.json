@@ -9,5 +9,38 @@
         "domicilio": "EJEMPLO DE DOMICILIO",
         "telefono": "55 33334444",
         "servicio": "Residencias"
+    },
+    {
+        "folio": "AN20261118-001",
+        "nombre": "Luis Galicia ",
+        "apellido": "Ana",
+        "curp": "wewerewrewrewr",
+        "sexo": "fememnino",
+        "fecha_nacimiento": "2000-03-21",
+        "domicilio": "23wecsg",
+        "telefono": "5573648391",
+        "servicio": "social"
+    },
+    {
+        "folio": "CA20261118-001",
+        "nombre": "Cristofer ",
+        "apellido": "Calzada",
+        "curp": "wewerewrewrewr",
+        "sexo": "fememnino",
+        "fecha_nacimiento": "2000-02-11",
+        "domicilio": "1wedc3trfa<",
+        "telefono": "2312321",
+        "servicio": "social"
+    },
+    {
+        "folio": "AN20261118-002",
+        "nombre": "Kitty",
+        "apellido": "Ana",
+        "curp": "wewerewrewrewr",
+        "sexo": "fememnino",
+        "fecha_nacimiento": "2000-03-21",
+        "domicilio": "1wedc3trfa<",
+        "telefono": "5566778899",
+        "servicio": "social"
     }
 ]

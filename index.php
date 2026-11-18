@@ -14,10 +14,19 @@ if(isset($_GET['pdf'])){
 // ======================================================
 // BASE URL DEL SISTEMA PHP
 // ======================================================
-if(!defined('BASE_URL')){
-    define('BASE_URL', 'http://localhost:8000/');
+if (!defined('BASE_URL')) {
+    define(
+        'BASE_URL',
+        rtrim(getenv('APP_URL') ?: 'http://localhost:8000', '/') . '/'
+    );
 }
 
+if (!defined('CITAS_URL')) {
+    define(
+        'CITAS_URL',
+        rtrim(getenv('CITAS_URL') ?: 'http://localhost:3000', '/')
+    );
+}
 
 // ======================================================
 // MÓDULO SOLICITADO
@@ -132,8 +141,8 @@ if($modulo === null){
     <!-- ==================================================
          CITAS - NODE.JS + MONGODB ATLAS
          ================================================== -->
-    <a href="http://localhost:3000/citas"
-       class="card">
+        <a href="<?php echo CITAS_URL; ?>/citas"
+            class="card">
 
         <div class="icono-circulo">
 
@@ -153,7 +162,6 @@ if($modulo === null){
 
 
 <?php
-
 // ======================================================
 // CARGA DE MÓDULOS PHP
 // ======================================================
@@ -173,10 +181,10 @@ if($modulo === null){
      * lo mandamos al módulo Node.js.
      */
 
-    if($modulo === 'citas'){
+    if ($modulo === 'citas') {
 
-        header("Location: http://localhost:3000/citas");
-        exit;
+    header("Location: " . CITAS_URL . "/citas");
+    exit;
 
     }
 

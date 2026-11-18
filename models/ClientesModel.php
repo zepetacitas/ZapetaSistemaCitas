@@ -1,56 +1,99 @@
+
 <?php
+
+require_once __DIR__ . "/ApiMongoClient.php";
+
 class ClientesModel {
 
-    private $archivo;
+    private $ruta = "/api/clientes";
 
-    public function __construct(){
-        $this->archivo = __DIR__ . "/../data/clientes.json";
-    }
+    // ========================================
+    // CONVERTIR RESPUESTA DE NODE.JS
+    // ========================================
 
-    public function obtener(){
-        if(!file_exists($this->archivo)){
+    private function convertirDatos($respuesta) {
+
+        if (
+            !isset($respuesta->datos) ||
+            !is_array($respuesta->datos)
+        ) {
             return [];
         }
-        return json_decode(file_get_contents($this->archivo), true) ?? [];
+
+        return json_decode(
+            json_encode($respuesta->datos),
+            true
+        ) ?? [];
     }
 
-    public function guardar($nuevo){
-        $datos = $this->obtener();
-        $datos[] = $nuevo;
-        file_put_contents($this->archivo, json_encode($datos, JSON_PRETTY_PRINT));
+    // ========================================
+    // OBTENER TODOS LOS CLIENTES
+    // ========================================
+
+    public function obtener() {
+
+        $respuesta = ApiMongoClient::obtener(
+            $this->ruta
+        );
+
+        return $this->convertirDatos($respuesta);
     }
 
-    public function eliminar($folio){
-        $datos = array_filter($this->obtener(), fn($c) => $c['folio'] != $folio);
-        file_put_contents($this->archivo, json_encode(array_values($datos), JSON_PRETTY_PRINT));
+    // ========================================
+    // GUARDAR CLIENTE
+    // ========================================
+
+    public function guardar($nuevo) {
+
+        return ApiMongoClient::guardar(
+            $this->ruta,
+            $nuevo
+        );
     }
 
-    public function actualizar($folio, $nuevo){
-        $datos = $this->obtener();
+    // ========================================
+    // ELIMINAR CLIENTE
+    // ========================================
 
-        foreach($datos as $i => $c){
-            if($c['folio'] === $folio){
-                $datos[$i] = $nuevo;
-                break;
-            }
+    public function eliminar($folio) {
+
+        return ApiMongoClient::eliminar(
+            $this->ruta,
+            $folio
+        );
+    }
+
+    // ========================================
+    // ACTUALIZAR CLIENTE
+    // ========================================
+
+    public function actualizar($folio, $nuevo) {
+
+        return ApiMongoClient::actualizar(
+            $this->ruta,
+            $folio,
+            $nuevo
+        );
+    }
+
+    // ========================================
+    // BUSCAR POR FOLIO O CURP
+    // ========================================
+
+    public function buscar($valor) {
+
+        if (trim($valor) === "") {
+            return [];
         }
 
-        file_put_contents($this->archivo, json_encode($datos, JSON_PRETTY_PRINT));
-    }
+        $rutaBusqueda = $this->ruta
+            . "/buscar?valor="
+            . rawurlencode($valor);
 
-    public function buscar($valor){
-        $clientes = $this->obtener();
-        $resultado = [];
+        $respuesta = ApiMongoClient::obtener(
+            $rutaBusqueda
+        );
 
-        foreach($clientes as $c){
-            if(
-                stripos($c['folio'], $valor) !== false ||
-                stripos($c['curp'], $valor) !== false
-            ){
-                $resultado[] = $c;
-            }
-        }
-
-        return $resultado;
+        return $this->convertirDatos($respuesta);
     }
 }
