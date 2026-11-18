@@ -1,4 +1,11 @@
+
 FROM php:8.2-apache
+
+# Instalar dependencias y habilitar cURL
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libcurl4-openssl-dev \
+    && docker-php-ext-install curl \
+    && rm -rf /var/lib/apt/lists/*
 
 # Habilitar mod_rewrite
 RUN a2enmod rewrite
@@ -12,13 +19,11 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-# Copiar primero archivos de Composer
-COPY composer.json composer.lock ./
-
 # Instalar dependencias PHP
+COPY composer.json composer.lock ./
 RUN composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
 
-# Copiar proyecto
+# Copiar el proyecto
 COPY . .
 
 # Permisos
