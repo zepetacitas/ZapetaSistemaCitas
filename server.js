@@ -17,11 +17,11 @@ const app = express();
 
 const PHP_URL =
     process.env.PHP_URL ||
-    "http://localhost/sistema_zepeta_completo";
+    "https://zapetasistemacitas.onrender.com";
 
 const PHP_LOGOUT_URL =
     process.env.PHP_LOGOUT_URL ||
-    "http://localhost:8000/";
+    "https://zapetasistemacitas.onrender.com/";
 
 // ========================================
 // SEGURIDAD
