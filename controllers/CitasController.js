@@ -1,3 +1,4 @@
+
 const CitasModel = require("../models/CitasModel");
 const { enviarConfirmacion } = require("../services/correoService");
 const { validationResult } = require("express-validator");
@@ -7,7 +8,6 @@ const { validationResult } = require("express-validator");
 // ============================================
 
 function obtenerFechaHoy() {
-
     const partes = new Intl.DateTimeFormat("en-CA", {
         timeZone: "America/Mexico_City",
         year: "numeric",
@@ -29,7 +29,6 @@ function obtenerFechaHoy() {
 // ============================================
 
 function validarFechaHora(fecha, hora) {
-
     const hoy = obtenerFechaHoy();
 
     if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
@@ -66,17 +65,38 @@ function validarFechaHora(fecha, hora) {
 }
 
 // ============================================
-// GENERAR FOLIO OPTIMIZADO
+// GENERAR FOLIO
 // ============================================
 
 async function generarFolio(modelo) {
-
     const fechaActual = obtenerFechaHoy().replace(/-/g, "");
     const prefijo = `CT${fechaActual}`;
 
     const numeroMayor = await modelo.obtenerUltimoNumeroFolio(prefijo);
 
     return `${prefijo}-${String(numeroMayor + 1).padStart(3, "0")}`;
+}
+
+// ============================================
+// ENVIAR CORREO EN SEGUNDO PLANO
+// ============================================
+
+function enviarCorreoEnSegundoPlano(cita) {
+    setImmediate(async () => {
+        try {
+            await enviarConfirmacion(cita);
+
+            console.log(
+                `CORREO DE CONFIRMACION ENVIADO CORRECTAMENTE A: ${cita.correo}`
+            );
+
+        } catch (errorCorreo) {
+            console.error(
+                `ERROR AL ENVIAR CORREO A ${cita.correo}:`,
+                errorCorreo
+            );
+        }
+    });
 }
 
 // ============================================
@@ -91,7 +111,6 @@ async function mostrarError(
     editar = null,
     busqueda = ""
 ) {
-
     const datos = await modelo.obtener();
 
     return res.status(status).render("citas/citas", {
@@ -114,7 +133,6 @@ class CitasController {
     // ========================================
 
     async index(req, res) {
-
         const modelo = new CitasModel();
 
         try {
@@ -128,7 +146,6 @@ class CitasController {
                 const resultadoValidacion = validationResult(req);
 
                 if (!resultadoValidacion.isEmpty()) {
-
                     const mensaje = resultadoValidacion
                         .array()
                         .map(error => error.msg)
@@ -139,8 +156,7 @@ class CitasController {
                         modelo,
                         mensaje,
                         400,
-                        req.body,
-                        ""
+                        req.body
                     );
                 }
 
@@ -155,7 +171,7 @@ class CitasController {
                 const hora = String(req.body.hora || "").trim();
 
                 // ====================================
-                // VALIDAR CAMPOS
+                // VALIDAR CAMPOS OBLIGATORIOS
                 // ====================================
 
                 if (
@@ -166,7 +182,6 @@ class CitasController {
                     !fecha ||
                     !hora
                 ) {
-
                     return await mostrarError(
                         res,
                         modelo,
@@ -183,7 +198,6 @@ class CitasController {
                 const errorFechaHora = validarFechaHora(fecha, hora);
 
                 if (errorFechaHora) {
-
                     return await mostrarError(
                         res,
                         modelo,
@@ -200,7 +214,6 @@ class CitasController {
                 const formatoCorreo = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
                 if (!formatoCorreo.test(correo)) {
-
                     return await mostrarError(
                         res,
                         modelo,
@@ -221,7 +234,6 @@ class CitasController {
                 );
 
                 if (citaExistente) {
-
                     return await mostrarError(
                         res,
                         modelo,
@@ -232,7 +244,7 @@ class CitasController {
                 }
 
                 // ====================================
-                // PREPARAR FOLIO
+                // GENERAR FOLIO
                 // ====================================
 
                 let folio = folioActual;
@@ -260,14 +272,12 @@ class CitasController {
                 // ====================================
 
                 if (folioActual) {
-
                     const actualizada = await modelo.actualizar(
                         folioActual,
                         cita
                     );
 
                     if (!actualizada) {
-
                         return await mostrarError(
                             res,
                             modelo,
@@ -277,39 +287,35 @@ class CitasController {
                         );
                     }
 
-                    console.log("Cita actualizada correctamente:", folio);
+                    console.log(
+                        "Cita actualizada correctamente:",
+                        folio
+                    );
 
                     return res.redirect("/citas?exito=actualizada");
                 }
 
                 // ====================================
-                // GUARDAR CITA NUEVA
+                // GUARDAR CITA NUEVA EN MONGODB
                 // ====================================
 
                 await modelo.guardar(cita);
 
-                console.log("Cita guardada correctamente:", folio);
+                console.log(
+                    "Cita guardada correctamente:",
+                    folio
+                );
 
-                // =================================
-// ENVIAR CORREO DE CONFIRMACIÓN
-// =================================
+                // ====================================
+                // ENVIAR CORREO SIN BLOQUEAR RESPUESTA
+                // ====================================
 
-try {
+                enviarCorreoEnSegundoPlano(cita);
 
-    await enviarConfirmacion(cita);
+                // ====================================
+                // RESPONDER INMEDIATAMENTE
+                // ====================================
 
-    console.log(
-        `CONFIRMACION ENVIADA CORRECTAMENTE A: ${correo}`
-    );
-
-} catch (errorCorreo) {
-
-    console.error(
-        "ERROR AL ENVIAR CONFIRMACION:",
-        errorCorreo
-    );
-}
-                // El usuario recibe la respuesta sin esperar al correo.
                 return res.redirect("/citas?exito=registrada");
             }
 
@@ -318,7 +324,6 @@ try {
             // ====================================
 
             if (req.query.eliminar) {
-
                 return res.status(405).send(
                     "Método no permitido. Utiliza el formulario de eliminación."
                 );
@@ -331,13 +336,11 @@ try {
             let editar = null;
 
             if (req.query.editar) {
-
                 editar = await modelo.buscarPorFolio(
                     String(req.query.editar)
                 );
 
                 if (!editar) {
-
                     return await mostrarError(
                         res,
                         modelo,
@@ -376,16 +379,15 @@ try {
 
         } catch (error) {
 
-            console.error("Error en CitasController.index:", error);
+            console.error(
+                "Error en CitasController.index:",
+                error
+            );
 
-            // ====================================
-            // ERROR DE DUPLICIDAD EN MONGODB
-            // ====================================
+            // ERROR DE DUPLICIDAD
 
             if (error.code === 11000) {
-
                 try {
-
                     return await mostrarError(
                         res,
                         modelo,
@@ -395,7 +397,6 @@ try {
                     );
 
                 } catch (errorLectura) {
-
                     console.error(
                         "Error al recuperar las citas:",
                         errorLectura.message
@@ -403,12 +404,9 @@ try {
                 }
             }
 
-            // ====================================
             // ERROR GENERAL
-            // ====================================
 
             try {
-
                 return await mostrarError(
                     res,
                     modelo,
@@ -418,7 +416,6 @@ try {
                 );
 
             } catch (errorVista) {
-
                 console.error(
                     "No se pudo cargar la vista de citas:",
                     errorVista.message
@@ -436,15 +433,12 @@ try {
     // ========================================
 
     async eliminar(req, res) {
-
         const modelo = new CitasModel();
 
         try {
-
             const folio = String(req.body.folio || "").trim();
 
             if (!folio) {
-
                 return await mostrarError(
                     res,
                     modelo,
@@ -456,7 +450,6 @@ try {
             const eliminada = await modelo.eliminar(folio);
 
             if (!eliminada || eliminada.deletedCount === 0) {
-
                 return await mostrarError(
                     res,
                     modelo,
@@ -470,11 +463,12 @@ try {
             return res.redirect("/citas?exito=eliminada");
 
         } catch (error) {
-
-            console.error("Error al eliminar la cita:", error);
+            console.error(
+                "Error al eliminar la cita:",
+                error
+            );
 
             try {
-
                 return await mostrarError(
                     res,
                     modelo,
@@ -483,7 +477,6 @@ try {
                 );
 
             } catch (errorVista) {
-
                 console.error(errorVista);
 
                 return res.status(500).send(
@@ -498,15 +491,12 @@ try {
     // ========================================
 
     async buscar(req, res) {
-
         const modelo = new CitasModel();
 
         try {
-
             const resultadoValidacion = validationResult(req);
 
             if (!resultadoValidacion.isEmpty()) {
-
                 const mensaje = resultadoValidacion
                     .array()
                     .map(error => error.msg)
@@ -535,11 +525,12 @@ try {
             });
 
         } catch (error) {
-
-            console.error("Error al buscar citas:", error);
+            console.error(
+                "Error al buscar citas:",
+                error
+            );
 
             try {
-
                 return await mostrarError(
                     res,
                     modelo,
@@ -550,7 +541,6 @@ try {
                 );
 
             } catch (errorVista) {
-
                 console.error(errorVista);
 
                 return res.status(500).send(
@@ -565,11 +555,9 @@ try {
     // ========================================
 
     async pdf(req, res) {
-
         const modelo = new CitasModel();
 
         try {
-
             const datos = await modelo.obtener();
 
             const fecha = new Date().toLocaleDateString(
@@ -588,8 +576,10 @@ try {
             });
 
         } catch (error) {
-
-            console.error("Error al generar el PDF:", error);
+            console.error(
+                "Error al generar el PDF:",
+                error
+            );
 
             return res.status(500).send(
                 "No fue posible generar el reporte de citas."
