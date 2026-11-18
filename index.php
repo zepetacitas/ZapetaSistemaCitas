@@ -1,81 +1,89 @@
+
 <?php
+
+// ======================================================
+// CONFIGURACIÓN DE URL
+// ======================================================
+
+// URL pública del servicio PHP en Render
+if (!defined('BASE_URL')) {
+    $appUrl = getenv('APP_URL')
+        ?: 'https://zapetasistemacitas.onrender.com';
+
+    define('BASE_URL', rtrim($appUrl, '/') . '/');
+}
+
+// URL pública del servicio Node.js en Render
+if (!defined('CITAS_URL')) {
+    $nodeUrl = getenv('CITAS_URL')
+        ?: 'https://zepeta.onrender.com';
+
+    define('CITAS_URL', rtrim($nodeUrl, '/'));
+}
 
 // ======================================================
 // PDF
 // ======================================================
-if(isset($_GET['pdf'])){
+
+if (isset($_GET['pdf'])) {
     require_once "controllers/PdfController.php";
+
     $pdf = new PdfController();
     $pdf->generar();
+
     exit;
-}
-
-
-// ======================================================
-// BASE URL DEL SISTEMA PHP
-// ======================================================
-if (!defined('BASE_URL')) {
-    define(
-        'BASE_URL',
-        rtrim(getenv('APP_URL') ?: 'http://localhost:8000', '/') . '/'
-    );
-}
-
-if (!defined('CITAS_URL')) {
-    define(
-        'CITAS_URL',
-        rtrim(getenv('CITAS_URL') ?: 'http://localhost:3000', '/')
-    );
 }
 
 // ======================================================
 // MÓDULO SOLICITADO
 // ======================================================
-$modulo = $_GET['modulo'] ?? null;
 
+$modulo = $_GET['modulo'] ?? null;
 
 // ======================================================
 // MENÚ PRINCIPAL
 // ======================================================
-if($modulo === null){
+
+if ($modulo === null) {
 ?>
 
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Sistema Zepeta</title>
 
-    <!-- CSS -->
     <link rel="stylesheet"
-          href="<?php echo BASE_URL; ?>public/css/estilos.css?v=<?php echo time(); ?>">
+          href="<?php echo BASE_URL; ?>public/css/estilos.css">
 </head>
 
 <body>
 
 <div class="logo">
 
-    <!-- Logotipo -->
-    <img src="<?php echo BASE_URL; ?>public/img/logo.png"
-         alt="Logo">
+    <img
+        src="<?php echo BASE_URL; ?>public/img/logo.png"
+        alt="Logo"
+    >
 
 </div>
 
-
 <div class="menu">
 
-    <!-- ==================================================
-         CLIENTES - PHP
-         ================================================== -->
+    <!-- CLIENTES -->
+
     <a href="<?php echo BASE_URL; ?>index.php?modulo=clientes"
        class="card">
 
         <div class="icono-circulo">
 
-            <img src="<?php echo BASE_URL; ?>public/img/clientes.png"
-                 alt="Clientes">
+            <img
+                src="<?php echo BASE_URL; ?>public/img/clientes.png"
+                alt="Clientes"
+            >
 
         </div>
 
@@ -83,17 +91,17 @@ if($modulo === null){
 
     </a>
 
+    <!-- PACIENTES -->
 
-    <!-- ==================================================
-         PACIENTES - PHP
-         ================================================== -->
     <a href="<?php echo BASE_URL; ?>index.php?modulo=pacientes"
        class="card">
 
         <div class="icono-circulo">
 
-            <img src="<?php echo BASE_URL; ?>public/img/pacientes.png"
-                 alt="Pacientes">
+            <img
+                src="<?php echo BASE_URL; ?>public/img/pacientes.png"
+                alt="Pacientes"
+            >
 
         </div>
 
@@ -101,17 +109,17 @@ if($modulo === null){
 
     </a>
 
+    <!-- EMPLEADOS -->
 
-    <!-- ==================================================
-         EMPLEADOS - PHP
-         ================================================== -->
     <a href="<?php echo BASE_URL; ?>index.php?modulo=empleados"
        class="card">
 
         <div class="icono-circulo">
 
-            <img src="<?php echo BASE_URL; ?>public/img/empleados.png"
-                 alt="Empleados">
+            <img
+                src="<?php echo BASE_URL; ?>public/img/empleados.png"
+                alt="Empleados"
+            >
 
         </div>
 
@@ -119,17 +127,17 @@ if($modulo === null){
 
     </a>
 
+    <!-- SOCIOS -->
 
-    <!-- ==================================================
-         SOCIOS - PHP
-         ================================================== -->
     <a href="<?php echo BASE_URL; ?>index.php?modulo=socios"
        class="card">
 
         <div class="icono-circulo">
 
-            <img src="<?php echo BASE_URL; ?>public/img/socios.png"
-                 alt="Socios">
+            <img
+                src="<?php echo BASE_URL; ?>public/img/socios.png"
+                alt="Socios"
+            >
 
         </div>
 
@@ -137,17 +145,17 @@ if($modulo === null){
 
     </a>
 
+    <!-- CITAS: NODE.JS -->
 
-    <!-- ==================================================
-         CITAS - NODE.JS + MONGODB ATLAS
-         ================================================== -->
-        <a href="<?php echo CITAS_URL; ?>/citas"
-            class="card">
+    <a href="<?php echo CITAS_URL; ?>/citas"
+       class="card">
 
         <div class="icono-circulo">
 
-            <img src="<?php echo BASE_URL; ?>public/img/citas.png"
-                 alt="Citas">
+            <img
+                src="<?php echo BASE_URL; ?>public/img/citas.png"
+                alt="Citas"
+            >
 
         </div>
 
@@ -160,103 +168,113 @@ if($modulo === null){
 </body>
 </html>
 
-
 <?php
-// ======================================================
-// CARGA DE MÓDULOS PHP
-// ======================================================
-}else{
 
-    /*
-     * IMPORTANTE:
-     *
-     * Citas YA NO SE PROCESA AQUÍ.
-     *
-     * Citas funciona mediante Node.js.
-     *
-     * Si alguien entra manualmente a:
-     *
-     * index.php?modulo=citas
-     *
-     * lo mandamos al módulo Node.js.
-     */
+// ======================================================
+// MÓDULOS PHP
+// ======================================================
+
+} else {
+
+    // ==================================================
+    // CITAS: REDIRECCIÓN A NODE.JS
+    // ==================================================
 
     if ($modulo === 'citas') {
 
-    header("Location: " . CITAS_URL . "/citas");
-    exit;
+        header("Location: " . CITAS_URL . "/citas");
+        exit;
 
     }
 
+    // ==================================================
+    // VALIDAR NOMBRE DEL MÓDULO
+    // ==================================================
+
+    $modulosPermitidos = [
+        'clientes',
+        'pacientes',
+        'empleados',
+        'socios'
+    ];
+
+    if (!in_array($modulo, $modulosPermitidos, true)) {
+
+        http_response_code(404);
+
+        echo "<h2 style='text-align:center;'>Módulo no encontrado</h2>";
+
+        exit;
+    }
 
     // ==================================================
-    // LOS DEMÁS MÓDULOS CONTINÚAN FUNCIONANDO EN PHP
+    // CARGAR CONTROLADOR
     // ==================================================
 
     $archivo = "controllers/" . ucfirst($modulo) . "Controller.php";
 
-
-    if(file_exists($archivo)){
+    if (file_exists($archivo)) {
 
         require_once $archivo;
 
         $clase = ucfirst($modulo) . "Controller";
 
+        if (!class_exists($clase)) {
+
+            throw new RuntimeException(
+                "No se encontró el controlador: " . $clase
+            );
+
+        }
+
         $controller = new $clase();
 
-
-        // ==================================================
+        // ==============================================
         // ACCIONES
-        // ==================================================
+        // ==============================================
 
-        if(
+        if (
             isset($_POST['guardar']) &&
             method_exists($controller, 'guardar')
-        ){
+        ) {
 
             $controller->guardar();
 
-
-        }elseif(
+        } elseif (
             isset($_POST['buscar']) &&
             method_exists($controller, 'buscar')
-        ){
+        ) {
 
             $controller->buscar();
 
-
-        }elseif(
+        } elseif (
             isset($_GET['eliminar']) &&
             method_exists($controller, 'eliminar')
-        ){
+        ) {
 
             $controller->eliminar();
 
-
-        }elseif(
+        } elseif (
             isset($_POST['actualizar']) &&
             method_exists($controller, 'actualizar')
-        ){
+        ) {
 
             $controller->actualizar();
 
-
-        }else{
+        } else {
 
             $controller->index();
 
         }
 
+    } else {
 
-    }else{
+        http_response_code(404);
 
-        echo "
-            <h2 style='text-align:center;'>
-                Módulo no encontrado
-            </h2>
-        ";
+        echo "<h2 style='text-align:center;'>Controlador no encontrado</h2>";
 
     }
 
 }
+
 ?>
