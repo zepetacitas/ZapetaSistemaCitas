@@ -315,9 +315,20 @@ class CitasController {
                 // PROGRAMAR CORREO DESPUÉS DE RESPONDER
                 // ====================================
 
-                res.once("finish", () => {
-                    enviarCorreoEnSegundoPlano(cita);
-                });
+                try {
+    console.log("ENVIANDO CORREO:", cita.correo);
+
+    const resultado = await enviarConfirmacion(cita);
+
+    console.log("CORREO ENVIADO:", resultado.messageId);
+
+    return res.redirect("/citas?exito=registrada");
+
+} catch (errorCorreo) {
+    console.error("ERROR REAL DE CORREO:", errorCorreo);
+
+    return res.redirect("/citas?exito=registrada&correo=error");
+}
 
                 // ====================================
                 // RESPONDER INMEDIATAMENTE AL NAVEGADOR
