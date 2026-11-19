@@ -10,9 +10,6 @@ const conectarDB = require("./config/db");
 const { iniciarRecordatorios } =
     require("./services/recordatorios");
 
-const { verificarCorreo } =
-    require("./config/correo");
-
 const app = express();
 
 const PHP_URL =
