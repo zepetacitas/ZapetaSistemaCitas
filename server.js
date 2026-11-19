@@ -45,12 +45,28 @@ app.use(express.json({
 // REGISTRO DE PETICIONES
 // ========================================
 
+
+ // ========================================
+// REGISTRO DETALLADO DE PETICIONES
+// ========================================
+
 app.use((req, res, next) => {
-    console.log(
-        "Petición recibida:",
-        req.method,
-        req.originalUrl
-    );
+
+    console.log("");
+    console.log("========================================");
+    console.log("PETICIÓN RECIBIDA");
+    console.log("========================================");
+    console.log("MÉTODO:", req.method);
+    console.log("URL:", req.originalUrl);
+    console.log("HOST:", req.get("host"));
+    console.log("REFERER:", req.get("referer") || "SIN REFERER");
+    console.log("USER-AGENT:", req.get("user-agent") || "SIN USER-AGENT");
+
+    if (req.method === "POST") {
+        console.log("BODY RECIBIDO:", req.body);
+    }
+
+    console.log("========================================");
 
     next();
 });

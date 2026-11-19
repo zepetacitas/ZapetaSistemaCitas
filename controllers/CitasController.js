@@ -86,6 +86,14 @@ async function mostrarError(
 class CitasController {
 
     async index(req, res) {
+        console.log("");
+    console.log("########################################");
+    console.log("ENTRÓ A CitasController.index");
+    console.log("MÉTODO:", req.method);
+    console.log("URL:", req.originalUrl);
+    console.log("########################################");
+
+   
         const modelo = new CitasModel();
 
         try {
