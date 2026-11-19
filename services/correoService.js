@@ -1,272 +1,34 @@
-console.log("########################################");
-console.log("correoService.js CARGADO - VERSION DIAGNOSTICO 2");
-console.log("########################################");
-const { google } = require("googleapis");
+const { BrevoClient } = require("@getbrevo/brevo");
 
 console.log("========================================");
-console.log("INICIANDO SERVICIO DE CORREO GMAIL");
+console.log("INICIANDO SERVICIO DE CORREO BREVO");
 console.log("========================================");
 
-// =====================================================
-// VARIABLES DE ENTORNO
-// =====================================================
-
-const CLIENT_ID = process.env.GMAIL_CLIENT_ID;
-const CLIENT_SECRET = process.env.GMAIL_CLIENT_SECRET;
-const REFRESH_TOKEN = process.env.GMAIL_REFRESH_TOKEN;
-const GMAIL_EMAIL = process.env.GMAIL_EMAIL;
-
-console.log("GMAIL_CLIENT_ID:", CLIENT_ID ? "CONFIGURADO" : "FALTANTE");
 console.log(
-    "GMAIL_CLIENT_SECRET:",
-    CLIENT_SECRET ? "CONFIGURADO" : "FALTANTE"
+    "BREVO_API_KEY:",
+    process.env.BREVO_API_KEY ? "CONFIGURADO" : "NO CONFIGURADO"
 );
+
 console.log(
-    "GMAIL_REFRESH_TOKEN:",
-    REFRESH_TOKEN ? "CONFIGURADO" : "FALTANTE"
-);
-console.log(
-    "GMAIL_EMAIL:",
-    GMAIL_EMAIL ? GMAIL_EMAIL : "FALTANTE"
+    "BREVO_EMAIL:",
+    process.env.BREVO_EMAIL || "NO CONFIGURADO"
 );
 
-// =====================================================
-// VALIDACIÓN DE VARIABLES
-// =====================================================
-
-if (!CLIENT_ID) {
-    console.error("ERROR: Falta GMAIL_CLIENT_ID");
-}
-
-if (!CLIENT_SECRET) {
-    console.error("ERROR: Falta GMAIL_CLIENT_SECRET");
-}
-
-if (!REFRESH_TOKEN) {
-    console.error("ERROR: Falta GMAIL_REFRESH_TOKEN");
-}
-
-if (!GMAIL_EMAIL) {
-    console.error("ERROR: Falta GMAIL_EMAIL");
-}
-
-// =====================================================
-// OAUTH2
-// =====================================================
-
-const oauth2Client = new google.auth.OAuth2(
-    CLIENT_ID,
-    CLIENT_SECRET
-);
-
-oauth2Client.setCredentials({
-    refresh_token: REFRESH_TOKEN
+const brevo = new BrevoClient({
+    apiKey: process.env.BREVO_API_KEY
 });
 
-// =====================================================
-// GMAIL API
-// =====================================================
-
-const gmail = google.gmail({
-    version: "v1",
-    auth: oauth2Client
-});
-
-// =====================================================
-// ESCAPAR HTML
-// =====================================================
 
 function escaparHTML(valor = "") {
-    return String(valor).replace(
-        /[&<>"']/g,
-        caracter => ({
-            "&": "&amp;",
-            "<": "&lt;",
-            ">": "&gt;",
-            '"': "&quot;",
-            "'": "&#39;"
-        }[caracter])
-    );
+    return String(valor).replace(/[&<>"']/g, caracter => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    }[caracter]));
 }
 
-// =====================================================
-// DATOS DE LA CITA
-// =====================================================
-
-function datosCita(cita) {
-    return `
-        <p><strong>Folio:</strong> ${escaparHTML(cita.folio)}</p>
-        <p><strong>Paciente:</strong> ${escaparHTML(cita.nombre)} ${escaparHTML(cita.apellido)}</p>
-        <p><strong>Área:</strong> ${escaparHTML(cita.area)}</p>
-        <p><strong>Fecha:</strong> ${escaparHTML(cita.fecha)}</p>
-        <p><strong>Hora:</strong> ${escaparHTML(cita.hora)}</p>
-    `;
-}
-
-// =====================================================
-// BASE64 URL SAFE
-// =====================================================
-
-function codificarBase64URL(texto) {
-    return Buffer.from(texto, "utf8")
-        .toString("base64")
-        .replace(/\+/g, "-")
-        .replace(/\//g, "_")
-        .replace(/=+$/g, "");
-}
-
-// =====================================================
-// CONSTRUIR CORREO
-// =====================================================
-
-function construirCorreo({
-    destinatario,
-    asunto,
-    texto,
-    html
-}) {
-
-    if (!GMAIL_EMAIL) {
-        throw new Error(
-            "Falta configurar GMAIL_EMAIL en Render."
-        );
-    }
-
-    if (!destinatario) {
-        throw new Error(
-            "La cita no tiene correo del destinatario."
-        );
-    }
-
-    const asuntoCodificado =
-        `=?UTF-8?B?${Buffer.from(
-            asunto,
-            "utf8"
-        ).toString("base64")}?=`;
-
-    const boundary =
-        "SistemaZepeta_" + Date.now();
-
-    const mensaje = [
-        `From: Sistema Zepeta <${GMAIL_EMAIL}>`,
-        `To: ${destinatario}`,
-        `Subject: ${asuntoCodificado}`,
-        "MIME-Version: 1.0",
-        `Content-Type: multipart/alternative; boundary="${boundary}"`,
-        "",
-        `--${boundary}`,
-        'Content-Type: text/plain; charset="UTF-8"',
-        "Content-Transfer-Encoding: base64",
-        "",
-        Buffer.from(texto, "utf8").toString("base64"),
-        "",
-        `--${boundary}`,
-        'Content-Type: text/html; charset="UTF-8"',
-        "Content-Transfer-Encoding: base64",
-        "",
-        Buffer.from(html, "utf8").toString("base64"),
-        "",
-        `--${boundary}--`,
-        ""
-    ].join("\r\n");
-
-    return codificarBase64URL(mensaje);
-}
-
-// =====================================================
-// PRUEBA DE AUTENTICACIÓN
-// =====================================================
-
-async function comprobarGmail() {
-
-    console.log("");
-    console.log("========================================");
-    console.log("PRUEBA DE AUTENTICACIÓN GMAIL");
-    console.log("========================================");
-
-    try {
-
-        console.log("Solicitando token de acceso a Google...");
-
-        const tokenResponse =
-            await oauth2Client.getAccessToken();
-
-        if (!tokenResponse || !tokenResponse.token) {
-
-            throw new Error(
-                "Google no devolvió un Access Token."
-            );
-        }
-
-        console.log(
-            "OAuth2 CORRECTO: Google entregó un Access Token."
-        );
-
-        console.log(
-            "Comprobando acceso a la cuenta de Gmail..."
-        );
-
-        const perfil =
-            await gmail.users.getProfile({
-                userId: "me"
-            });
-
-        console.log(
-            "ACCESO A GMAIL CORRECTO."
-        );
-
-        console.log(
-            "Cuenta autenticada:",
-            perfil.data.emailAddress
-        );
-
-        console.log("========================================");
-        console.log("AUTENTICACIÓN GMAIL CORRECTA");
-        console.log("========================================");
-
-        return true;
-
-    } catch (error) {
-
-        console.error("");
-        console.error("========================================");
-        console.error("ERROR EN AUTENTICACIÓN GMAIL");
-        console.error("========================================");
-
-        console.error(
-            "Mensaje:",
-            error.message
-        );
-
-        console.error(
-            "Código:",
-            error.code || "SIN CÓDIGO"
-        );
-
-        if (error.response?.data) {
-
-            console.error(
-                "Respuesta de Google:"
-            );
-
-            console.error(
-                JSON.stringify(
-                    error.response.data,
-                    null,
-                    2
-                )
-            );
-        }
-
-        console.error("========================================");
-
-        throw error;
-    }
-}
-
-// =====================================================
-// ENVIAR CORREO
-// =====================================================
 
 async function enviarCorreo({
     destinatario,
@@ -275,271 +37,327 @@ async function enviarCorreo({
     html
 }) {
 
-    console.log("");
-    console.log("========================================");
-    console.log("INICIANDO ENVÍO DE CORREO");
-    console.log("========================================");
+    if (!process.env.BREVO_API_KEY) {
+        throw new Error(
+            "Falta configurar BREVO_API_KEY en las variables de entorno."
+        );
+    }
 
-    console.log(
-        "Remitente:",
-        GMAIL_EMAIL
-    );
+    if (!process.env.BREVO_EMAIL) {
+        throw new Error(
+            "Falta configurar BREVO_EMAIL en las variables de entorno."
+        );
+    }
 
-    console.log(
-        "Destinatario:",
-        destinatario
-    );
+    if (!destinatario) {
+        throw new Error(
+            "No se recibió un correo de destinatario."
+        );
+    }
 
-    console.log(
-        "Asunto:",
-        asunto
-    );
+    console.log("----------------------------------------");
+    console.log("ENVIANDO CORREO MEDIANTE BREVO");
+    console.log("REMITENTE:", process.env.BREVO_EMAIL);
+    console.log("DESTINATARIO:", destinatario);
+    console.log("ASUNTO:", asunto);
 
     try {
 
-        // -------------------------------------------------
-        // 1. COMPROBAR AUTENTICACIÓN
-        // -------------------------------------------------
-
-        await comprobarGmail();
-
-        // -------------------------------------------------
-        // 2. CONSTRUIR MENSAJE
-        // -------------------------------------------------
-
-        console.log(
-            "Construyendo mensaje MIME..."
-        );
-
-        const raw = construirCorreo({
-            destinatario,
-            asunto,
-            texto,
-            html
-        });
-
-        console.log(
-            "Mensaje MIME construido correctamente."
-        );
-
-        console.log(
-            "Tamaño del mensaje:",
-            raw.length,
-            "caracteres"
-        );
-
-        // -------------------------------------------------
-        // 3. ENVIAR A GMAIL
-        // -------------------------------------------------
-
-        console.log(
-            "Enviando mensaje mediante Gmail API..."
-        );
-
         const respuesta =
-            await gmail.users.messages.send({
-                userId: "me",
-                requestBody: {
-                    raw
-                }
+            await brevo.transactionalEmails.sendTransacEmail({
+
+                sender: {
+                    name: "Sistema Zepeta",
+                    email: process.env.BREVO_EMAIL
+                },
+
+                to: [
+                    {
+                        email: destinatario
+                    }
+                ],
+
+                subject: asunto,
+
+                textContent: texto,
+
+                htmlContent: html
             });
 
-        // -------------------------------------------------
-        // 4. ÉXITO
-        // -------------------------------------------------
 
-        console.log("");
-        console.log("========================================");
-        console.log("CORREO ENVIADO CORRECTAMENTE");
-        console.log("========================================");
+        console.log("CORREO ENVIADO CORRECTAMENTE POR BREVO");
 
         console.log(
-            "ID DE GMAIL:",
-            respuesta.data.id
+            "MESSAGE ID:",
+            respuesta.messageId
         );
 
-        console.log(
-            "THREAD ID:",
-            respuesta.data.threadId
-        );
+        console.log("----------------------------------------");
 
-        console.log("========================================");
-
-        return respuesta.data;
+        return respuesta;
 
     } catch (error) {
 
-        console.error("");
-        console.error("========================================");
-        console.error("ERROR REAL AL ENVIAR CORREO");
-        console.error("========================================");
+        console.error("----------------------------------------");
+        console.error("ERROR AL ENVIAR CORREO CON BREVO");
+        console.error("----------------------------------------");
 
         console.error(
-            "Mensaje:",
+            "MENSAJE:",
             error.message
         );
 
-        console.error(
-            "Código:",
-            error.code || "SIN CÓDIGO"
-        );
-
-        console.error(
-            "Estado HTTP:",
-            error.response?.status || "SIN ESTADO"
-        );
-
-        if (error.response?.data) {
-
-            console.error("");
+        if (error.statusCode) {
             console.error(
-                "RESPUESTA COMPLETA DE GOOGLE:"
-            );
-
-            console.error(
-                JSON.stringify(
-                    error.response.data,
-                    null,
-                    2
-                )
+                "STATUS CODE:",
+                error.statusCode
             );
         }
 
-        if (error.errors) {
-
-            console.error("");
+        if (error.rawResponse) {
             console.error(
-                "ERRORES ADICIONALES:"
-            );
-
-            console.error(
-                JSON.stringify(
-                    error.errors,
-                    null,
-                    2
-                )
+                "RESPUESTA DE BREVO:",
+                error.rawResponse
             );
         }
 
-        console.error("========================================");
+        console.error("----------------------------------------");
 
         throw error;
     }
 }
 
-// =====================================================
-// CONFIRMACIÓN DE CITA
-// =====================================================
 
+/**
+ * ENVÍO DE CONFIRMACIÓN DE CITA
+ */
 async function enviarConfirmacion(cita) {
 
-    console.log("");
-    console.log("########################################");
-    console.log("CONFIRMACIÓN DE CITA");
-    console.log("########################################");
+    console.log("========================================");
+    console.log("INICIANDO CONFIRMACIÓN DE CITA");
+    console.log("FOLIO:", cita.folio);
+    console.log("DESTINATARIO:", cita.correo);
+    console.log("========================================");
 
-    console.log(
-        "Folio:",
-        cita.folio
-    );
 
-    console.log(
-        "Paciente:",
-        cita.nombre,
-        cita.apellido
-    );
+    const nombreCompleto =
+        `${cita.nombre || ""} ${cita.apellido || ""}`.trim();
 
-    console.log(
-        "Correo:",
-        cita.correo
-    );
 
     const html = `
-        <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:20px;color:#333">
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
 
-            <h2 style="color:#198754">
-                ¡Tu cita se registró correctamente!
-            </h2>
+    <title>Confirmación de cita</title>
+</head>
 
-            <p>
-                Hola ${escaparHTML(cita.nombre)},
-                hemos registrado tu cita en Sistema Zepeta.
-            </p>
+<body style="
+    margin:0;
+    padding:0;
+    background:#f4f4f4;
+    font-family:Arial,Helvetica,sans-serif;
+">
 
-            ${datosCita(cita)}
+    <div style="
+        max-width:600px;
+        margin:30px auto;
+        background:white;
+        padding:30px;
+        border-radius:10px;
+    ">
 
-            <p>
-                Conserva tu folio para futuras consultas.
-            </p>
+        <h1 style="
+            text-align:center;
+            color:#333;
+        ">
+            Confirmación de cita
+        </h1>
 
-        </div>
-    `;
 
-    const texto =
-        `Hola ${cita.nombre}, tu cita se registró correctamente.\n\n` +
-        `Folio: ${cita.folio}\n` +
-        `Área: ${cita.area}\n` +
-        `Fecha: ${cita.fecha}\n` +
-        `Hora: ${cita.hora}\n\n` +
-        `Conserva tu folio para futuras consultas.`;
+        <p>
+            Hola <strong>${escaparHTML(nombreCompleto)}</strong>,
+        </p>
+
+
+        <p>
+            Tu cita ha sido registrada correctamente.
+        </p>
+
+
+        <hr>
+
+
+        <h3>Datos de la cita</h3>
+
+
+        <p>
+            <strong>Folio:</strong>
+            ${escaparHTML(cita.folio)}
+        </p>
+
+
+        <p>
+            <strong>Área:</strong>
+            ${escaparHTML(cita.area)}
+        </p>
+
+
+        <p>
+            <strong>Fecha:</strong>
+            ${escaparHTML(cita.fecha)}
+        </p>
+
+
+        <p>
+            <strong>Hora:</strong>
+            ${escaparHTML(cita.hora)}
+        </p>
+
+
+        <hr>
+
+
+        <p style="
+            text-align:center;
+            color:#666;
+            font-size:13px;
+        ">
+            Sistema Zepeta
+        </p>
+
+    </div>
+
+</body>
+</html>
+`;
+
+
+    const texto = `
+CONFIRMACIÓN DE CITA
+
+Hola ${nombreCompleto}.
+
+Tu cita ha sido registrada correctamente.
+
+Folio: ${cita.folio}
+Área: ${cita.area}
+Fecha: ${cita.fecha}
+Hora: ${cita.hora}
+
+Sistema Zepeta
+`;
+
 
     return enviarCorreo({
+
         destinatario: cita.correo,
-        asunto: `Confirmación de cita ${cita.folio}`,
+
+        asunto:
+            `Confirmación de cita ${cita.folio}`,
+
         texto,
+
         html
+
     });
 }
 
-// =====================================================
-// RECORDATORIO
-// =====================================================
 
+/**
+ * ENVÍO DE RECORDATORIO
+ */
 async function enviarRecordatorio(cita) {
 
+    const nombreCompleto =
+        `${cita.nombre || ""} ${cita.apellido || ""}`.trim();
+
+
     const html = `
-        <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:20px;color:#333">
+<!DOCTYPE html>
+<html lang="es">
 
-            <h2 style="color:#0d6efd">
-                Recordatorio de cita
-            </h2>
+<head>
+    <meta charset="UTF-8">
+</head>
 
-            <p>
-                Hola ${escaparHTML(cita.nombre)},
-                te recordamos que tienes una cita programada próximamente.
-            </p>
+<body>
 
-            ${datosCita(cita)}
+    <h2>Recordatorio de cita</h2>
 
-            <p>
-                ¡Te esperamos!
-            </p>
+    <p>
+        Hola <strong>${escaparHTML(nombreCompleto)}</strong>.
+    </p>
 
-        </div>
-    `;
+    <p>
+        Te recordamos que tienes una cita programada.
+    </p>
 
-    const texto =
-        `Hola ${cita.nombre}, te recordamos que tienes una cita programada próximamente.\n\n` +
-        `Folio: ${cita.folio}\n` +
-        `Área: ${cita.area}\n` +
-        `Fecha: ${cita.fecha}\n` +
-        `Hora: ${cita.hora}\n\n` +
-        `¡Te esperamos!`;
+    <p>
+        <strong>Folio:</strong>
+        ${escaparHTML(cita.folio)}
+    </p>
+
+    <p>
+        <strong>Área:</strong>
+        ${escaparHTML(cita.area)}
+    </p>
+
+    <p>
+        <strong>Fecha:</strong>
+        ${escaparHTML(cita.fecha)}
+    </p>
+
+    <p>
+        <strong>Hora:</strong>
+        ${escaparHTML(cita.hora)}
+    </p>
+
+    <br>
+
+    <p>
+        Sistema Zepeta
+    </p>
+
+</body>
+
+</html>
+`;
+
+
+    const texto = `
+RECORDATORIO DE CITA
+
+Hola ${nombreCompleto}.
+
+Te recordamos que tienes una cita programada.
+
+Folio: ${cita.folio}
+Área: ${cita.area}
+Fecha: ${cita.fecha}
+Hora: ${cita.hora}
+
+Sistema Zepeta
+`;
+
 
     return enviarCorreo({
+
         destinatario: cita.correo,
-        asunto: `Recordatorio de tu cita ${cita.folio}`,
+
+        asunto:
+            `Recordatorio de cita ${cita.folio}`,
+
         texto,
+
         html
+
     });
 }
 
-// =====================================================
-// EXPORTACIONES
-// =====================================================
 
 module.exports = {
     enviarConfirmacion,
-    enviarRecordatorio,
-    comprobarGmail
+    enviarRecordatorio
 };
