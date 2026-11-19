@@ -1,11 +1,6 @@
-
 const CitasModel = require("../models/CitasModel");
 const { enviarConfirmacion } = require("../services/correoService");
 const { validationResult } = require("express-validator");
-
-// ============================================
-// FECHA ACTUAL DE MÉXICO
-// ============================================
 
 function obtenerFechaHoy() {
     const partes = new Intl.DateTimeFormat("en-CA", {
@@ -23,10 +18,6 @@ function obtenerFechaHoy() {
 
     return `${valores.year}-${valores.month}-${valores.day}`;
 }
-
-// ============================================
-// VALIDAR FECHA Y HORA
-// ============================================
 
 function validarFechaHora(fecha, hora) {
     const hoy = obtenerFechaHoy();
@@ -64,10 +55,6 @@ function validarFechaHora(fecha, hora) {
     return null;
 }
 
-// ============================================
-// GENERAR FOLIO
-// ============================================
-
 async function generarFolio(modelo) {
     const fechaActual = obtenerFechaHoy().replace(/-/g, "");
     const prefijo = `CT${fechaActual}`;
@@ -76,37 +63,6 @@ async function generarFolio(modelo) {
 
     return `${prefijo}-${String(numeroMayor + 1).padStart(3, "0")}`;
 }
-
-// ============================================
-// ENVIAR CORREO EN SEGUNDO PLANO
-// ============================================
-
-function enviarCorreoEnSegundoPlano(cita) {
-    setImmediate(async () => {
-        try {
-            console.log(
-                `INICIANDO ENVIO DE CORREO A: ${cita.correo}`
-            );
-
-            const resultado = await enviarConfirmacion(cita);
-
-            console.log(
-                `CORREO ENVIADO CORRECTAMENTE A: ${cita.correo}`,
-                resultado.messageId || ""
-            );
-
-        } catch (errorCorreo) {
-            console.error(
-                `ERROR AL ENVIAR CORREO A ${cita.correo}:`,
-                errorCorreo.message || errorCorreo
-            );
-        }
-    });
-}
-
-// ============================================
-// MOSTRAR VISTA CON ERROR
-// ============================================
 
 async function mostrarError(
     res,
@@ -127,27 +83,13 @@ async function mostrarError(
     });
 }
 
-// ============================================
-// CONTROLADOR
-// ============================================
-
 class CitasController {
-
-    // ========================================
-    // MOSTRAR, GUARDAR Y ACTUALIZAR
-    // ========================================
 
     async index(req, res) {
         const modelo = new CitasModel();
 
         try {
-
-            // ====================================
-            // GUARDAR O ACTUALIZAR
-            // ====================================
-
             if (req.method === "POST") {
-
                 const resultadoValidacion = validationResult(req);
 
                 if (!resultadoValidacion.isEmpty()) {
@@ -165,8 +107,6 @@ class CitasController {
                     );
                 }
 
-                // LIMPIAR DATOS
-
                 const folioActual = String(req.body.folio || "").trim();
                 const nombre = String(req.body.nombre || "").trim();
                 const apellido = String(req.body.apellido || "").trim();
@@ -174,10 +114,6 @@ class CitasController {
                 const area = String(req.body.area || "").trim();
                 const fecha = String(req.body.fecha || "").trim();
                 const hora = String(req.body.hora || "").trim();
-
-                // ====================================
-                // VALIDAR CAMPOS OBLIGATORIOS
-                // ====================================
 
                 if (
                     !nombre ||
@@ -196,10 +132,6 @@ class CitasController {
                     );
                 }
 
-                // ====================================
-                // VALIDAR FECHA Y HORA
-                // ====================================
-
                 const errorFechaHora = validarFechaHora(fecha, hora);
 
                 if (errorFechaHora) {
@@ -212,10 +144,6 @@ class CitasController {
                     );
                 }
 
-                // ====================================
-                // VALIDAR CORREO
-                // ====================================
-
                 const formatoCorreo = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
                 if (!formatoCorreo.test(correo)) {
@@ -227,10 +155,6 @@ class CitasController {
                         req.body
                     );
                 }
-
-                // ====================================
-                // COMPROBAR HORARIO OCUPADO
-                // ====================================
 
                 const citaExistente = await modelo.buscarPorFechaHora(
                     fecha,
@@ -248,19 +172,11 @@ class CitasController {
                     );
                 }
 
-                // ====================================
-                // GENERAR FOLIO
-                // ====================================
-
                 let folio = folioActual;
 
                 if (!folioActual) {
                     folio = await generarFolio(modelo);
                 }
-
-                // ====================================
-                // CONSTRUIR CITA
-                // ====================================
 
                 const cita = {
                     folio,
@@ -271,10 +187,6 @@ class CitasController {
                     fecha,
                     hora
                 };
-
-                // ====================================
-                // ACTUALIZAR CITA
-                // ====================================
 
                 if (folioActual) {
                     const actualizada = await modelo.actualizar(
@@ -292,17 +204,10 @@ class CitasController {
                         );
                     }
 
-                    console.log(
-                        "CITA ACTUALIZADA CORRECTAMENTE:",
-                        folio
-                    );
+                    console.log("CITA ACTUALIZADA CORRECTAMENTE:", folio);
 
                     return res.redirect("/citas?exito=actualizada");
                 }
-
-                // ====================================
-                // GUARDAR CITA NUEVA EN MONGODB
-                // ====================================
 
                 await modelo.guardar(cita);
 
@@ -311,45 +216,52 @@ class CitasController {
                     folio
                 );
 
-                // ====================================
-                // PROGRAMAR CORREO DESPUÉS DE RESPONDER
-                // ====================================
-
                 try {
-    console.log("ENVIANDO CORREO:", cita.correo);
+                    console.log("----------------------------------------");
+                    console.log("INICIANDO ENVÍO DE CORREO");
+                    console.log("FOLIO:", folio);
+                    console.log("DESTINATARIO:", correo);
 
-    const resultado = await enviarConfirmacion(cita);
+                    const resultado = await enviarConfirmacion(cita);
 
-    console.log("CORREO ENVIADO:", resultado.messageId);
+                    console.log("CORREO ENVIADO CORRECTAMENTE");
+                    console.log("FOLIO:", folio);
+                    console.log("ID DE GMAIL:", resultado.id);
+                    console.log("----------------------------------------");
 
-    return res.redirect("/citas?exito=registrada");
+                } catch (errorCorreo) {
+                    console.error("----------------------------------------");
+                    console.error("ERROR REAL AL ENVIAR CORREO");
+                    console.error("FOLIO:", folio);
+                    console.error("DESTINATARIO:", correo);
+                    console.error("ERROR:", errorCorreo.message);
 
-} catch (errorCorreo) {
-    console.error("ERROR REAL DE CORREO:", errorCorreo);
+                    if (errorCorreo.response?.data) {
+                        console.error(
+                            "DETALLE DE GOOGLE:",
+                            JSON.stringify(
+                                errorCorreo.response.data,
+                                null,
+                                2
+                            )
+                        );
+                    }
 
-    return res.redirect("/citas?exito=registrada&correo=error");
-}
+                    if (errorCorreo.code) {
+                        console.error("CÓDIGO DE ERROR:", errorCorreo.code);
+                    }
 
-                // ====================================
-                // RESPONDER INMEDIATAMENTE AL NAVEGADOR
-                // ====================================
+                    console.error("----------------------------------------");
+                }
 
                 return res.redirect("/citas?exito=registrada");
             }
-
-            // ====================================
-            // NO PERMITIR ELIMINAR CON GET
-            // ====================================
 
             if (req.query.eliminar) {
                 return res.status(405).send(
                     "Método no permitido. Utiliza el formulario de eliminación."
                 );
             }
-
-            // ====================================
-            // CARGAR CITA PARA EDITAR
-            // ====================================
 
             let editar = null;
 
@@ -367,10 +279,6 @@ class CitasController {
                     );
                 }
             }
-
-            // ====================================
-            // MOSTRAR CITAS
-            // ====================================
 
             const datos = await modelo.obtener();
 
@@ -396,13 +304,7 @@ class CitasController {
             });
 
         } catch (error) {
-
-            console.error(
-                "ERROR EN CitasController.index:",
-                error
-            );
-
-            // ERROR DE DUPLICIDAD
+            console.error("ERROR EN CitasController.index:", error);
 
             if (error.code === 11000) {
                 try {
@@ -413,7 +315,6 @@ class CitasController {
                         409,
                         req.body || null
                     );
-
                 } catch (errorLectura) {
                     console.error(
                         "ERROR AL RECUPERAR LAS CITAS:",
@@ -421,8 +322,6 @@ class CitasController {
                     );
                 }
             }
-
-            // ERROR GENERAL
 
             try {
                 return await mostrarError(
@@ -449,10 +348,6 @@ class CitasController {
             }
         }
     }
-
-    // ========================================
-    // ELIMINAR CITA
-    // ========================================
 
     async eliminar(req, res) {
         const modelo = new CitasModel();
@@ -485,10 +380,7 @@ class CitasController {
             return res.redirect("/citas?exito=eliminada");
 
         } catch (error) {
-            console.error(
-                "ERROR AL ELIMINAR LA CITA:",
-                error
-            );
+            console.error("ERROR AL ELIMINAR LA CITA:", error);
 
             try {
                 return await mostrarError(
@@ -511,10 +403,6 @@ class CitasController {
             }
         }
     }
-
-    // ========================================
-    // BUSCAR CITAS
-    // ========================================
 
     async buscar(req, res) {
         const modelo = new CitasModel();
@@ -551,10 +439,7 @@ class CitasController {
             });
 
         } catch (error) {
-            console.error(
-                "ERROR AL BUSCAR CITAS:",
-                error
-            );
+            console.error("ERROR AL BUSCAR CITAS:", error);
 
             try {
                 return await mostrarError(
@@ -580,10 +465,6 @@ class CitasController {
         }
     }
 
-    // ========================================
-    // GENERAR PDF
-    // ========================================
-
     async pdf(req, res) {
         const modelo = new CitasModel();
 
@@ -606,10 +487,7 @@ class CitasController {
             });
 
         } catch (error) {
-            console.error(
-                "ERROR AL GENERAR EL PDF:",
-                error
-            );
+            console.error("ERROR AL GENERAR EL PDF:", error);
 
             if (res.headersSent) {
                 return;
