@@ -7,24 +7,19 @@ class EmpleadosController {
 
         $modelo = new EmpleadosModel();
 
-        // =========================
-        // GUARDAR / ACTUALIZAR
-        // =========================
         if(isset($_POST['guardar'])){
 
-            // ACTUALIZA EL FOLIO
             if(!empty($_POST['folio'])){
                 $folio = $_POST['folio'];
             } else {
 
-                // ===== GENERAR FOLIO =====
                 $apellido = strtoupper(trim($_POST['apellido']));
                 $letras = substr($apellido, 0, 2);
                 $fecha = date("Ymd");
 
                 $prefijo = $letras . $fecha;
 
-                $pacientes = $modelo->obtener();
+                $empleados = $modelo->obtener();
                 $contador = 1;
 
                 foreach($empleados as $c){
@@ -58,18 +53,12 @@ class EmpleadosController {
             exit;
         }
 
-        // =========================
-        // ELIMINAR
-        // =========================
         if(isset($_GET['eliminar'])){
             $modelo->eliminar($_GET['eliminar']);
             header("Location: index.php?modulo=empleados");
             exit;
         }
 
-        // =========================
-        // EDITAR
-        // =========================
         $editar = null;
 
         if(isset($_GET['editar'])){
