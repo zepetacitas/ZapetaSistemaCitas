@@ -4,23 +4,15 @@ const { BrevoClient } = require("@getbrevo/brevo");
 const URL_FONDO_CORREO =
     "https://zapetasistemacitas-1.onrender.com/img/fondo-correo-zepeta.png";
 
-console.log("========================================");
-console.log("INICIANDO SERVICIO DE CORREO BREVO");
-console.log("========================================");
-
-console.log(
-    "BREVO_API_KEY:",
-    process.env.BREVO_API_KEY ? "CONFIGURADO" : "NO CONFIGURADO"
-);
-
-console.log(
-    "BREVO_EMAIL:",
-    process.env.BREVO_EMAIL || "NO CONFIGURADO"
-);
-
 const brevo = new BrevoClient({
     apiKey: process.env.BREVO_API_KEY
 });
+
+console.log("========================================");
+console.log("INICIANDO SERVICIO DE CORREO BREVO");
+console.log("BREVO_API_KEY:", process.env.BREVO_API_KEY ? "CONFIGURADO" : "NO CONFIGURADO");
+console.log("BREVO_EMAIL:", process.env.BREVO_EMAIL || "NO CONFIGURADO");
+console.log("========================================");
 
 function escaparHTML(valor = "") {
     return String(valor).replace(/[&<>"']/g, caracter => ({
@@ -32,12 +24,8 @@ function escaparHTML(valor = "") {
     }[caracter]));
 }
 
-async function enviarCorreo({
-    destinatario,
-    asunto,
-    texto,
-    html
-}) {
+async function enviarCorreo({ destinatario, asunto, texto, html }) {
+
     if (!process.env.BREVO_API_KEY) {
         throw new Error("Falta configurar BREVO_API_KEY.");
     }
@@ -50,13 +38,11 @@ async function enviarCorreo({
         throw new Error("No se recibió un correo de destinatario.");
     }
 
-    console.log("----------------------------------------");
-    console.log("ENVIANDO CORREO MEDIANTE BREVO");
-    console.log("REMITENTE:", process.env.BREVO_EMAIL);
-    console.log("DESTINATARIO:", destinatario);
-    console.log("ASUNTO:", asunto);
-
     try {
+        console.log("ENVIANDO CORREO MEDIANTE BREVO");
+        console.log("DESTINATARIO:", destinatario);
+        console.log("ASUNTO:", asunto);
+
         const respuesta =
             await brevo.transactionalEmails.sendTransacEmail({
 
@@ -76,26 +62,21 @@ async function enviarCorreo({
                 htmlContent: html
             });
 
-        console.log("CORREO ENVIADO CORRECTAMENTE POR BREVO");
+        console.log("CORREO ENVIADO CORRECTAMENTE");
         console.log("MESSAGE ID:", respuesta.messageId);
-        console.log("----------------------------------------");
 
         return respuesta;
 
     } catch (error) {
-        console.error("----------------------------------------");
-        console.error("ERROR AL ENVIAR CORREO CON BREVO");
-        console.error("MENSAJE:", error.message);
+        console.error("ERROR AL ENVIAR CORREO:", error.message);
 
         if (error.statusCode) {
             console.error("STATUS CODE:", error.statusCode);
         }
 
         if (error.rawResponse) {
-            console.error("RESPUESTA DE BREVO:", error.rawResponse);
+            console.error("RESPUESTA:", error.rawResponse);
         }
-
-        console.error("----------------------------------------");
 
         throw error;
     }
@@ -128,15 +109,142 @@ function crearPlantillaCorreo(cita, tipo) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light">
+    <meta name="supported-color-schemes" content="light">
+
     <title>${titulo}</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            background-color: #f2f2f2;
+            font-family: Arial, Helvetica, sans-serif;
+            color: #000000;
+        }
+
+        table {
+            border-collapse: collapse;
+        }
+
+        .contenedor {
+            width: 100%;
+            max-width: 600px;
+            background-color: #ffffff;
+        }
+
+        .imagen-zepeta {
+            display: block;
+            width: 100%;
+            max-width: 600px;
+            height: auto;
+            border: 0;
+            outline: none;
+        }
+
+        .contenido {
+            padding: 30px 38px;
+            color: #000000;
+            font-size: 15px;
+            line-height: 1.7;
+        }
+
+        .titulo {
+            color: #000000;
+            font-size: 25px;
+            text-align: center;
+            margin: 0 0 25px;
+            font-weight: bold;
+        }
+
+        .subtitulo {
+            color: #000000;
+            font-size: 19px;
+            text-align: center;
+            margin: 28px 0 18px;
+        }
+
+        .tabla-datos {
+            width: 100%;
+            background-color: #ffffff;
+            border: 1px solid #cccccc;
+            color: #000000;
+            font-size: 14px;
+        }
+
+        .tabla-datos td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #dddddd;
+            color: #000000;
+            text-align: left;
+            overflow-wrap: anywhere;
+        }
+
+        .etiqueta {
+            font-weight: bold;
+            color: #000000;
+            width: 35%;
+        }
+
+        .despedida {
+            text-align: center;
+            color: #000000;
+            margin-top: 28px;
+        }
+
+        .marca {
+            text-align: center;
+            color: #000000;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .pie {
+            text-align: center;
+            color: #000000;
+            font-size: 12px;
+            margin-top: 0;
+        }
+
+        @media only screen and (max-width: 600px) {
+
+            .contenedor {
+                width: 100% !important;
+            }
+
+            .imagen-zepeta {
+                width: 100% !important;
+                max-width: 100% !important;
+                height: auto !important;
+            }
+
+            .contenido {
+                padding: 23px 16px !important;
+                font-size: 14px !important;
+            }
+
+            .titulo {
+                font-size: 21px !important;
+            }
+
+            .subtitulo {
+                font-size: 17px !important;
+            }
+
+            .tabla-datos {
+                font-size: 13px !important;
+            }
+
+            .tabla-datos td {
+                padding: 10px 7px !important;
+            }
+        }
+    </style>
 </head>
 
-<body style="
-    margin:0;
-    padding:0;
-    background-color:#f8f5f6;
-    font-family:Arial,Helvetica,sans-serif;
-">
+<body>
 
     <table
         role="presentation"
@@ -144,138 +252,143 @@ function crearPlantillaCorreo(cita, tipo) {
         cellpadding="0"
         cellspacing="0"
         border="0"
-        style="background-color:#f8f5f6;padding:20px 8px;"
+        style="width:100%;background-color:#f2f2f2;"
     >
         <tr>
-            <td align="center">
+            <td align="center" style="padding:15px 5px;">
 
                 <table
                     role="presentation"
+                    class="contenedor"
                     width="600"
                     cellpadding="0"
                     cellspacing="0"
                     border="0"
-                    background="${URL_FONDO_CORREO}"
                     style="
                         width:100%;
                         max-width:600px;
                         background-color:#ffffff;
-                        background-image:url('${URL_FONDO_CORREO}');
-                        background-repeat:no-repeat;
-                        background-position:center top;
-                        background-size:100% 100%;
-                        border-collapse:collapse;
+                        border:1px solid #e0e0e0;
                     "
                 >
 
                     <tr>
-                        <td style="
-                            padding:230px 38px 55px;
-                            color:#383038;
-                            font-size:15px;
-                            line-height:1.6;
-                        ">
+                        <td style="padding:0;margin:0;">
+                            <img
+                                src="${URL_FONDO_CORREO}"
+                                alt="Consultorio de Servicios para la Mujer ZEPETA"
+                                width="600"
+                                class="imagen-zepeta"
+                                style="
+                                    display:block;
+                                    width:100%;
+                                    max-width:600px;
+                                    height:auto;
+                                    border:0;
+                                "
+                            >
+                        </td>
+                    </tr>
 
-                            <h1 style="
-                                color:#67194f;
-                                text-align:center;
-                                font-size:25px;
-                                margin:0 0 25px;
-                            ">
+                    <tr>
+                        <td class="contenido"
+                            style="
+                                padding:30px 38px;
+                                color:#000000;
+                                font-family:Arial,Helvetica,sans-serif;
+                            "
+                        >
+
+                            <h1 class="titulo"
+                                style="color:#000000;text-align:center;">
                                 ${titulo}
                             </h1>
 
-                            <p>
+                            <p style="color:#000000;">
                                 Hola <strong>${nombre}</strong>:
                             </p>
 
-                            <p style="text-align:justify;">
+                            <p style="
+                                color:#000000;
+                                text-align:justify;
+                            ">
                                 ${mensaje}
                             </p>
 
-                            <h2 style="
-                                color:#80502b;
-                                font-size:19px;
-                                text-align:center;
-                                margin-top:30px;
-                                margin-bottom:18px;
-                            ">
+                            <h2 class="subtitulo"
+                                style="color:#000000;text-align:center;">
                                 Datos de tu cita
                             </h2>
 
                             <table
                                 role="presentation"
+                                class="tabla-datos"
                                 width="100%"
-                                cellpadding="10"
+                                cellpadding="0"
                                 cellspacing="0"
                                 border="0"
                                 style="
+                                    width:100%;
                                     background-color:#ffffff;
-                                    border:1px solid #e8dce4;
-                                    border-collapse:collapse;
-                                    font-size:14px;
+                                    border:1px solid #cccccc;
+                                    color:#000000;
                                 "
                             >
+
                                 <tr>
-                                    <td style="border-bottom:1px solid #eadfe5;">
-                                        <strong style="color:#67194f;">Folio:</strong>
+                                    <td class="etiqueta"
+                                        style="color:#000000;font-weight:bold;">
+                                        Folio:
                                     </td>
-                                    <td style="border-bottom:1px solid #eadfe5;">
+                                    <td style="color:#000000;">
                                         ${folio}
                                     </td>
                                 </tr>
 
                                 <tr>
-                                    <td style="border-bottom:1px solid #eadfe5;">
-                                        <strong style="color:#67194f;">Área:</strong>
+                                    <td class="etiqueta"
+                                        style="color:#000000;font-weight:bold;">
+                                        Área:
                                     </td>
-                                    <td style="border-bottom:1px solid #eadfe5;">
+                                    <td style="color:#000000;">
                                         ${area}
                                     </td>
                                 </tr>
 
                                 <tr>
-                                    <td style="border-bottom:1px solid #eadfe5;">
-                                        <strong style="color:#67194f;">Fecha:</strong>
+                                    <td class="etiqueta"
+                                        style="color:#000000;font-weight:bold;">
+                                        Fecha:
                                     </td>
-                                    <td style="border-bottom:1px solid #eadfe5;">
+                                    <td style="color:#000000;">
                                         ${fecha}
                                     </td>
                                 </tr>
 
                                 <tr>
-                                    <td>
-                                        <strong style="color:#67194f;">Hora:</strong>
+                                    <td class="etiqueta"
+                                        style="color:#000000;font-weight:bold;border-bottom:0;">
+                                        Hora:
                                     </td>
-                                    <td>
+                                    <td style="color:#000000;border-bottom:0;">
                                         ${hora}
                                     </td>
                                 </tr>
+
                             </table>
 
-                            <p style="
-                                text-align:center;
-                                margin-top:30px;
-                            ">
+                            <p class="despedida"
+                               style="color:#000000;text-align:center;">
                                 Gracias por confiar en nosotros.
                             </p>
 
-                            <p style="
-                                text-align:center;
-                                color:#67194f;
-                                font-size:17px;
-                                font-weight:bold;
-                                margin-bottom:5px;
-                            ">
+                            <p class="marca"
+                               style="color:#000000;text-align:center;">
                                 ZEPETA
                             </p>
 
-                            <p style="
-                                text-align:center;
-                                color:#777777;
-                                font-size:12px;
-                                margin-top:0;
-                            ">
+                            <p class="pie"
+                               style="color:#000000;text-align:center;">
                                 Consultorio de Servicios para la Mujer
                             </p>
 
@@ -309,20 +422,14 @@ Hora: ${cita.hora || ""}
 Consultorio de Servicios para la Mujer ZEPETA.
 `;
 
-    return {
-        html,
-        texto,
-        nombreCompleto
-    };
+    return { html, texto };
 }
 
 async function enviarConfirmacion(cita) {
 
-    console.log("========================================");
     console.log("INICIANDO CONFIRMACIÓN DE CITA");
     console.log("FOLIO:", cita.folio);
     console.log("DESTINATARIO:", cita.correo);
-    console.log("========================================");
 
     const { html, texto } =
         crearPlantillaCorreo(cita, "confirmacion");
@@ -337,11 +444,9 @@ async function enviarConfirmacion(cita) {
 
 async function enviarRecordatorio(cita) {
 
-    console.log("========================================");
     console.log("INICIANDO RECORDATORIO DE CITA");
     console.log("FOLIO:", cita.folio);
     console.log("DESTINATARIO:", cita.correo);
-    console.log("========================================");
 
     const { html, texto } =
         crearPlantillaCorreo(cita, "recordatorio");
