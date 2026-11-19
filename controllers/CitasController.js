@@ -209,52 +209,233 @@ class CitasController {
                     return res.redirect("/citas?exito=actualizada");
                 }
 
-                await modelo.guardar(cita);
+               
+// =====================================================
+// GUARDAR CITA EN MONGODB
+// =====================================================
 
-                console.log(
-                    "CITA GUARDADA CORRECTAMENTE EN MONGODB:",
-                    folio
-                );
+try {
+    console.log("");
+    console.log("========================================");
+    console.log("INICIANDO GUARDADO DE CITA");
+    console.log("========================================");
 
-                try {
-                    console.log("----------------------------------------");
-                    console.log("INICIANDO ENVÍO DE CORREO");
-                    console.log("FOLIO:", folio);
-                    console.log("DESTINATARIO:", correo);
+    console.log("Folio:", folio);
+    console.log("Nombre:", nombre);
+    console.log("Apellido:", apellido);
+    console.log("Correo:", correo);
+    console.log("Área:", area);
+    console.log("Fecha:", fecha);
+    console.log("Hora:", hora);
 
-                    const resultado = await enviarConfirmacion(cita);
+    await modelo.guardar(cita);
 
-                    console.log("CORREO ENVIADO CORRECTAMENTE");
-                    console.log("FOLIO:", folio);
-                    console.log("ID DE GMAIL:", resultado.id);
-                    console.log("----------------------------------------");
+    console.log("========================================");
+    console.log("PASO 1: CITA GUARDADA CORRECTAMENTE");
+    console.log("FOLIO:", folio);
+    console.log("========================================");
 
-                } catch (errorCorreo) {
-                    console.error("----------------------------------------");
-                    console.error("ERROR REAL AL ENVIAR CORREO");
-                    console.error("FOLIO:", folio);
-                    console.error("DESTINATARIO:", correo);
-                    console.error("ERROR:", errorCorreo.message);
+} catch (errorGuardar) {
 
-                    if (errorCorreo.response?.data) {
-                        console.error(
-                            "DETALLE DE GOOGLE:",
-                            JSON.stringify(
-                                errorCorreo.response.data,
-                                null,
-                                2
-                            )
-                        );
-                    }
+    console.error("");
+    console.error("========================================");
+    console.error("ERROR AL GUARDAR CITA EN MONGODB");
+    console.error("========================================");
 
-                    if (errorCorreo.code) {
-                        console.error("CÓDIGO DE ERROR:", errorCorreo.code);
-                    }
+    console.error(
+        "Mensaje:",
+        errorGuardar.message
+    );
 
-                    console.error("----------------------------------------");
-                }
+    console.error(
+        "Código:",
+        errorGuardar.code || "SIN CÓDIGO"
+    );
 
-                return res.redirect("/citas?exito=registrada");
+    console.error(
+        "Nombre:",
+        errorGuardar.name || "SIN NOMBRE"
+    );
+
+    if (errorGuardar.errors) {
+        console.error(
+            "ERRORES DE VALIDACIÓN:",
+            JSON.stringify(
+                errorGuardar.errors,
+                null,
+                2
+            )
+        );
+    }
+
+    console.error("========================================");
+
+    throw errorGuardar;
+}
+
+
+// =====================================================
+// ENVÍO DE CORREO DE CONFIRMACIÓN
+// =====================================================
+
+console.log("");
+console.log("========================================");
+console.log("PASO 2: PREPARANDO ENVÍO DE CORREO");
+console.log("========================================");
+
+console.log("Folio:", folio);
+console.log("Destinatario:", correo);
+
+try {
+
+    console.log("");
+    console.log("----------------------------------------");
+    console.log("PASO 2.1: LLAMANDO A enviarConfirmacion()");
+    console.log("----------------------------------------");
+
+    console.log("Datos enviados al servicio de correo:");
+
+    console.log({
+        folio: cita.folio,
+        nombre: cita.nombre,
+        apellido: cita.apellido,
+        correo: cita.correo,
+        area: cita.area,
+        fecha: cita.fecha,
+        hora: cita.hora
+    });
+
+    const resultado =
+        await enviarConfirmacion(cita);
+
+    console.log("");
+    console.log("========================================");
+    console.log("PASO 3: CORREO ENVIADO CORRECTAMENTE");
+    console.log("========================================");
+
+    console.log(
+        "Folio:",
+        folio
+    );
+
+    console.log(
+        "Destinatario:",
+        correo
+    );
+
+    console.log(
+        "ID DE GMAIL:",
+        resultado?.id || "SIN ID"
+    );
+
+    console.log(
+        "THREAD ID:",
+        resultado?.threadId || "SIN THREAD ID"
+    );
+
+    console.log("========================================");
+
+} catch (errorCorreo) {
+
+    console.error("");
+    console.error("========================================");
+    console.error("PASO 3: ERROR AL ENVIAR CORREO");
+    console.error("========================================");
+
+    console.error(
+        "Folio:",
+        folio
+    );
+
+    console.error(
+        "Destinatario:",
+        correo
+    );
+
+    console.error(
+        "Tipo de error:",
+        errorCorreo.name || "DESCONOCIDO"
+    );
+
+    console.error(
+        "Mensaje:",
+        errorCorreo.message || "SIN MENSAJE"
+    );
+
+    console.error(
+        "Código:",
+        errorCorreo.code || "SIN CÓDIGO"
+    );
+
+    console.error(
+        "Estado HTTP:",
+        errorCorreo.response?.status || "SIN ESTADO"
+    );
+
+    if (errorCorreo.response?.data) {
+
+        console.error("");
+        console.error(
+            "========================================"
+        );
+
+        console.error(
+            "RESPUESTA COMPLETA DE GOOGLE"
+        );
+
+        console.error(
+            "========================================"
+        );
+
+        console.error(
+            JSON.stringify(
+                errorCorreo.response.data,
+                null,
+                2
+            )
+        );
+    }
+
+    if (errorCorreo.errors) {
+
+        console.error("");
+        console.error(
+            "ERRORES ADICIONALES:"
+        );
+
+        console.error(
+            JSON.stringify(
+                errorCorreo.errors,
+                null,
+                2
+            )
+        );
+    }
+
+    console.error("");
+    console.error(
+        "IMPORTANTE: LA CITA YA FUE GUARDADA EN MONGODB."
+    );
+
+    console.error(
+        "EL ERROR CORRESPONDE ÚNICAMENTE AL ENVÍO DE CORREO."
+    );
+
+    console.error("========================================");
+}
+
+
+// =====================================================
+// FINALIZAR REGISTRO
+// =====================================================
+
+console.log("");
+console.log("========================================");
+console.log("REGISTRO DE CITA FINALIZADO");
+console.log("FOLIO:", folio);
+console.log("========================================");
+
+return res.redirect("/citas?exito=registrada");
             }
 
             if (req.query.eliminar) {
