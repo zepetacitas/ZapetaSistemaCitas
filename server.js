@@ -73,7 +73,6 @@ app.use(express.static("public"));
 // ========================================
 
 const clientesRoutes = require("./routes/clientes");
-
 app.use("/api/clientes", clientesRoutes);
 
 // ========================================
@@ -81,7 +80,6 @@ app.use("/api/clientes", clientesRoutes);
 // ========================================
 
 const pacientesRoutes = require("./routes/pacientes");
-
 app.use("/api/pacientes", pacientesRoutes);
 
 // ========================================
@@ -89,7 +87,6 @@ app.use("/api/pacientes", pacientesRoutes);
 // ========================================
 
 const empleadosRoutes = require("./routes/empleados");
-
 app.use("/api/empleados", empleadosRoutes);
 
 // ========================================
@@ -97,21 +94,17 @@ app.use("/api/empleados", empleadosRoutes);
 // ========================================
 
 const sociosRoutes = require("./routes/socios");
-
 app.use("/api/socios", sociosRoutes);
 
 // ========================================
 // RUTAS CITAS
-// CONSERVADAS SIN CAMBIOS
 // ========================================
 
 const citasRoutes = require("./routes/citas");
-
 app.use("/citas", citasRoutes);
 
 // ========================================
 // CERRAR SESIÓN
-// Node.js → Home PHP
 // ========================================
 
 app.get("/logout", (req, res) => {
@@ -120,7 +113,6 @@ app.get("/logout", (req, res) => {
 
 // ========================================
 // HOME
-// Node.js → Home PHP
 // ========================================
 
 app.get("/", (req, res) => {
@@ -135,7 +127,7 @@ const PORT = process.env.PORT || 3000;
 
 async function iniciarServidor() {
     try {
-        // Conectar primero a MongoDB
+        // Conectar a MongoDB
         await conectarDB();
 
         console.log("MongoDB conectado correctamente.");
@@ -143,19 +135,7 @@ async function iniciarServidor() {
         // Iniciar recordatorios de citas
         iniciarRecordatorios();
 
-        // Verificar configuración de Gmail
-        verificarCorreo()
-            .then(() => {
-                console.log("Gmail verificado correctamente");
-            })
-            .catch((error) => {
-                console.error(
-                    "No se pudo verificar Gmail:",
-                    error.message
-                );
-            });
-
-        // Iniciar servidor Express
+        // Iniciar Express
         app.listen(PORT, "0.0.0.0", () => {
             console.log("");
             console.log("SISTEMA ZEPETA");
