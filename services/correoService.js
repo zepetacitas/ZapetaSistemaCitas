@@ -1,3 +1,6 @@
+console.log("########################################");
+console.log("correoService.js CARGADO - VERSION DIAGNOSTICO 2");
+console.log("########################################");
 const { google } = require("googleapis");
 
 console.log("========================================");
