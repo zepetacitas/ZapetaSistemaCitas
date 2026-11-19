@@ -14,8 +14,8 @@ if (!defined('BASE_URL')) {
 
 // URL pública del servicio Node.js en Render
 if (!defined('CITAS_URL')) {
-    $nodeUrl = getenv('CITAS_URL')
-        ?: 'https://zepeta.onrender.com';
+   $nodeUrl = getenv('CITAS_URL')
+    ?: 'https://zapetasistemacitas-1.onrender.com';
 
     define('CITAS_URL', rtrim($nodeUrl, '/'));
 }
