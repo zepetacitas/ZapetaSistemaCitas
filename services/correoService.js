@@ -83,7 +83,6 @@ async function enviarCorreo({ destinatario, asunto, texto, html }) {
 }
 
 function crearPlantillaCorreo(cita, tipo) {
-
     const esRecordatorio = tipo === "recordatorio";
 
     const nombreCompleto =
@@ -100,7 +99,7 @@ function crearPlantillaCorreo(cita, tipo) {
         : "Confirmación de cita";
 
     const mensaje = esRecordatorio
-        ? "Te recordamos que tienes una cita programada con nosotros. Te esperamos."
+        ? "Te recordamos que tienes una cita programada con nosotros. ¡Te esperamos!"
         : "Tu cita ha sido registrada correctamente. Nos alegra que hayas elegido nuestros servicios.";
 
     const html = `
@@ -111,7 +110,6 @@ function crearPlantillaCorreo(cita, tipo) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="light">
     <meta name="supported-color-schemes" content="light">
-
     <title>${titulo}</title>
 
     <style>
@@ -128,49 +126,60 @@ function crearPlantillaCorreo(cita, tipo) {
             border-collapse: collapse;
         }
 
-        .contenedor {
+        .fondo {
             width: 100%;
             max-width: 600px;
             background-color: #ffffff;
+            background-image: url('${URL_FONDO_CORREO}');
+            background-repeat: no-repeat;
+            background-position: center top;
+            background-size: 100% 100%;
         }
 
-        .imagen-zepeta {
-            display: block;
-            width: 100%;
-            max-width: 600px;
-            height: auto;
-            border: 0;
-            outline: none;
+        .espacio-logo {
+            height: 245px;
+            font-size: 1px;
+            line-height: 1px;
         }
 
         .contenido {
-            padding: 30px 38px;
+            padding: 15px 35px 35px;
             color: #000000;
-            font-size: 15px;
-            line-height: 1.7;
+        }
+
+        .panel {
+            width: 100%;
+            background-color: #ffffff;
+            border: 1px solid #e5d5d9;
         }
 
         .titulo {
             color: #000000;
             font-size: 25px;
             text-align: center;
-            margin: 0 0 25px;
+            margin: 0 0 22px;
             font-weight: bold;
         }
 
         .subtitulo {
             color: #000000;
-            font-size: 19px;
+            font-size: 18px;
             text-align: center;
-            margin: 28px 0 18px;
+            margin: 24px 0 15px;
+        }
+
+        .texto {
+            color: #000000;
+            font-size: 15px;
+            line-height: 1.6;
         }
 
         .tabla-datos {
             width: 100%;
             background-color: #ffffff;
             border: 1px solid #cccccc;
-            color: #000000;
             font-size: 14px;
+            color: #000000;
         }
 
         .tabla-datos td {
@@ -183,50 +192,36 @@ function crearPlantillaCorreo(cita, tipo) {
 
         .etiqueta {
             font-weight: bold;
-            color: #000000;
             width: 35%;
         }
 
         .despedida {
             text-align: center;
             color: #000000;
-            margin-top: 28px;
-        }
-
-        .marca {
-            text-align: center;
-            color: #000000;
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .pie {
-            text-align: center;
-            color: #000000;
-            font-size: 12px;
-            margin-top: 0;
+            margin-top: 25px;
+            font-size: 14px;
         }
 
         @media only screen and (max-width: 600px) {
-
-            .contenedor {
+            .fondo {
                 width: 100% !important;
+                background-size: 100% 100% !important;
             }
 
-            .imagen-zepeta {
-                width: 100% !important;
-                max-width: 100% !important;
-                height: auto !important;
+            .espacio-logo {
+                height: 190px !important;
             }
 
             .contenido {
-                padding: 23px 16px !important;
-                font-size: 14px !important;
+                padding: 10px 12px 25px !important;
             }
 
             .titulo {
                 font-size: 21px !important;
+            }
+
+            .texto {
+                font-size: 14px !important;
             }
 
             .subtitulo {
@@ -245,162 +240,149 @@ function crearPlantillaCorreo(cita, tipo) {
 </head>
 
 <body>
-
-    <table
-        role="presentation"
-        width="100%"
-        cellpadding="0"
-        cellspacing="0"
-        border="0"
-        style="width:100%;background-color:#f2f2f2;"
-    >
+    <table role="presentation" width="100%" cellpadding="0"
+        cellspacing="0" border="0"
+        style="background-color:#f2f2f2;width:100%;">
         <tr>
-            <td align="center" style="padding:15px 5px;">
+            <td align="center" style="padding:12px 5px;">
 
-                <table
-                    role="presentation"
-                    class="contenedor"
-                    width="600"
-                    cellpadding="0"
-                    cellspacing="0"
+                <table role="presentation" class="fondo"
+                    width="600" cellpadding="0" cellspacing="0"
                     border="0"
+                    background="${URL_FONDO_CORREO}"
                     style="
                         width:100%;
                         max-width:600px;
                         background-color:#ffffff;
-                        border:1px solid #e0e0e0;
-                    "
-                >
+                        background-image:url('${URL_FONDO_CORREO}');
+                        background-repeat:no-repeat;
+                        background-position:center top;
+                        background-size:100% 100%;
+                    ">
 
+                    <!-- Espacio reservado para el logo -->
                     <tr>
-                        <td style="padding:0;margin:0;">
-                            <img
-                                src="${URL_FONDO_CORREO}"
-                                alt="Consultorio de Servicios para la Mujer ZEPETA"
-                                width="600"
-                                class="imagen-zepeta"
-                                style="
-                                    display:block;
-                                    width:100%;
-                                    max-width:600px;
-                                    height:auto;
-                                    border:0;
-                                "
-                            >
+                        <td class="espacio-logo"
+                            height="245"
+                            style="height:245px;font-size:1px;line-height:1px;">
+                            &nbsp;
                         </td>
                     </tr>
 
+                    <!-- Contenido sobre el fondo -->
                     <tr>
-                        <td class="contenido"
-                            style="
-                                padding:30px 38px;
-                                color:#000000;
-                                font-family:Arial,Helvetica,sans-serif;
-                            "
-                        >
+                        <td class="contenido" style="padding:15px 35px 35px;">
 
-                            <h1 class="titulo"
-                                style="color:#000000;text-align:center;">
-                                ${titulo}
-                            </h1>
-
-                            <p style="color:#000000;">
-                                Hola <strong>${nombre}</strong>:
-                            </p>
-
-                            <p style="
-                                color:#000000;
-                                text-align:justify;
-                            ">
-                                ${mensaje}
-                            </p>
-
-                            <h2 class="subtitulo"
-                                style="color:#000000;text-align:center;">
-                                Datos de tu cita
-                            </h2>
-
-                            <table
-                                role="presentation"
-                                class="tabla-datos"
-                                width="100%"
-                                cellpadding="0"
-                                cellspacing="0"
-                                border="0"
-                                style="
-                                    width:100%;
-                                    background-color:#ffffff;
-                                    border:1px solid #cccccc;
-                                    color:#000000;
-                                "
-                            >
+                            <table role="presentation" width="100%"
+                                cellpadding="0" cellspacing="0"
+                                border="0" class="panel"
+                                style="background-color:#ffffff;border:1px solid #e5d5d9;">
 
                                 <tr>
-                                    <td class="etiqueta"
-                                        style="color:#000000;font-weight:bold;">
-                                        Folio:
-                                    </td>
-                                    <td style="color:#000000;">
-                                        ${folio}
+                                    <td style="padding:25px 22px;color:#000000;">
+
+                                        <h1 class="titulo"
+                                            style="color:#000000;text-align:center;">
+                                            ${titulo}
+                                        </h1>
+
+                                        <p class="texto"
+                                            style="color:#000000;">
+                                            Hola <strong>${nombre}</strong>:
+                                        </p>
+
+                                        <p class="texto"
+                                            style="color:#000000;text-align:justify;">
+                                            ${mensaje}
+                                        </p>
+
+                                        <h2 class="subtitulo"
+                                            style="color:#000000;text-align:center;">
+                                            Datos de tu cita
+                                        </h2>
+
+                                        <table role="presentation"
+                                            class="tabla-datos"
+                                            width="100%"
+                                            cellpadding="0"
+                                            cellspacing="0"
+                                            border="0"
+                                            style="background-color:#ffffff;border:1px solid #cccccc;">
+
+                                            <tr>
+                                                <td class="etiqueta"
+                                                    style="font-weight:bold;color:#000000;">
+                                                    Folio:
+                                                </td>
+                                                <td style="color:#000000;">
+                                                    ${folio}
+                                                </td>
+                                            </tr>
+
+                                            <tr>
+                                                <td class="etiqueta"
+                                                    style="font-weight:bold;color:#000000;">
+                                                    Área:
+                                                </td>
+                                                <td style="color:#000000;">
+                                                    ${area}
+                                                </td>
+                                            </tr>
+
+                                            <tr>
+                                                <td class="etiqueta"
+                                                    style="font-weight:bold;color:#000000;">
+                                                    Fecha:
+                                                </td>
+                                                <td style="color:#000000;">
+                                                    ${fecha}
+                                                </td>
+                                            </tr>
+
+                                            <tr>
+                                                <td class="etiqueta"
+                                                    style="font-weight:bold;color:#000000;border-bottom:0;">
+                                                    Hora:
+                                                </td>
+                                                <td style="color:#000000;border-bottom:0;">
+                                                    ${hora}
+                                                </td>
+                                            </tr>
+                                        </table>
+
+                                        <p class="despedida"
+                                            style="color:#000000;text-align:center;">
+                                            Gracias por confiar en nosotros.
+                                        </p>
+
+                                        <p style="
+                                            color:#000000;
+                                            text-align:center;
+                                            font-size:17px;
+                                            font-weight:bold;
+                                            margin-bottom:4px;">
+                                            ZEPETA
+                                        </p>
+
+                                        <p style="
+                                            color:#000000;
+                                            text-align:center;
+                                            font-size:12px;
+                                            margin-top:0;">
+                                            Consultorio de Servicios para la Mujer
+                                        </p>
+
                                     </td>
                                 </tr>
-
-                                <tr>
-                                    <td class="etiqueta"
-                                        style="color:#000000;font-weight:bold;">
-                                        Área:
-                                    </td>
-                                    <td style="color:#000000;">
-                                        ${area}
-                                    </td>
-                                </tr>
-
-                                <tr>
-                                    <td class="etiqueta"
-                                        style="color:#000000;font-weight:bold;">
-                                        Fecha:
-                                    </td>
-                                    <td style="color:#000000;">
-                                        ${fecha}
-                                    </td>
-                                </tr>
-
-                                <tr>
-                                    <td class="etiqueta"
-                                        style="color:#000000;font-weight:bold;border-bottom:0;">
-                                        Hora:
-                                    </td>
-                                    <td style="color:#000000;border-bottom:0;">
-                                        ${hora}
-                                    </td>
-                                </tr>
-
                             </table>
 
-                            <p class="despedida"
-                               style="color:#000000;text-align:center;">
-                                Gracias por confiar en nosotros.
-                            </p>
-
-                            <p class="marca"
-                               style="color:#000000;text-align:center;">
-                                ZEPETA
-                            </p>
-
-                            <p class="pie"
-                               style="color:#000000;text-align:center;">
-                                Consultorio de Servicios para la Mujer
-                            </p>
-
                         </td>
                     </tr>
-
                 </table>
 
             </td>
         </tr>
     </table>
-
 </body>
 </html>
 `;
